@@ -1,0 +1,14 @@
+{
+  "name": "@shared",
+  "main": "src/index.ts",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "extends": "../tsconfig.base.json",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

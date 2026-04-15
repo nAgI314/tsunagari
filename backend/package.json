@@ -1,0 +1,26 @@
+{
+  "name": "backend",
+  "module": "index.ts",
+  "extends": "../tsconfig.base.json",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "dev": "bun --watch index.ts",
+    "start": "bun index.ts",
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/supertest": "^6.0.3"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "pg": "^8.20.0",
+    "reflect-metadata": "^0.2.2",
+    "supertest": "^7.1.1",
+    "typeorm": "^0.3.28"
+  }
+}

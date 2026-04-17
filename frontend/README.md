@@ -2,6 +2,10 @@
 
 日程調整リンク作成の最小 UI です。`/api/events` に POST してリンクIDを表示します。
 
+開発環境では `/dev` に DB 操作用ページがあります（User の一覧・追加・更新・削除）。
+有効化するには `.env.example` を `.env` にコピーして `VITE_ENABLE_DEV_PAGE=true` を設定してください。
+`/dev` は `import.meta.env.DEV` かつ `VITE_ENABLE_DEV_PAGE=true` のときだけ表示されます。
+
 ## 開発起動
 
 ```bash

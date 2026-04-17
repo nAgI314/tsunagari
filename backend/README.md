@@ -10,6 +10,7 @@ cp .env.example .env
 ```
 
 `.env` の DB 設定を更新してください。
+`/api/dev/*` を使う場合は `NODE_ENV=development` かつ `DEV_API_ENABLED=true` が必要です。
 
 ## DB Migration
 
@@ -40,6 +41,8 @@ bun run db:migration:revert
 bun run start
 ```
 
+`NODE_ENV=development` の場合、起動時に migration を自動実行します（`relation "user" does not exist` の回避）。
+
 ## Run tests
 
 ```bash
@@ -53,11 +56,16 @@ bun run test
 3. migration を生成・実行する
 4. API 側で `AppDataSource.getRepository(Entity)` から CRUD する
 
-`index.ts` では `POST /api/users` と `GET /api/users/:id` で TypeORM Repository の最小利用例を実装しています。
+`index.ts` では `/api/dev/users` 系で TypeORM Repository の CRUD 利用例を実装しています。
 
 ## Endpoints
 
 - `GET /health` - ヘルスチェック
 - `POST /api/events` - 日程調整イベント作成（メモリ上で生成）
-- `POST /api/users` - User 作成（TypeORM）
-- `GET /api/users/:id` - User 取得（TypeORM）
+- `GET /api/dev/users` - User 一覧（TypeORM）
+- `POST /api/dev/users` - User 作成（TypeORM）
+- `GET /api/dev/users/:id` - User 取得（TypeORM）
+- `PATCH /api/dev/users/:id` - User 更新（TypeORM）
+- `DELETE /api/dev/users/:id` - User 削除（TypeORM）
+
+`/api/dev/*` は `NODE_ENV=development` かつ `DEV_API_ENABLED=true` のときだけ有効です。

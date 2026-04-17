@@ -1,10 +1,11 @@
 import { type FormEvent, useMemo, useState } from "react";
 import { createEvent } from "./api";
+import DevPage from "./DevPage";
 import "./App.css";
 
 const toIso = (value: string): string => new Date(value).toISOString();
 
-function App() {
+function EventPage() {
   const [title, setTitle] = useState("");
   const [organizerName, setOrganizerName] = useState("");
   const [start, setStart] = useState("");
@@ -93,14 +94,30 @@ function App() {
         </button>
       </form>
 
-      {createdLinkId && (
-        <p role="status">作成完了: /event/{createdLinkId}</p>
-      )}
-      {error && (
-        <p role="alert">{error}</p>
-      )}
+      {createdLinkId && <p role="status">作成完了: /event/{createdLinkId}</p>}
+      {error && <p role="alert">{error}</p>}
     </main>
   );
+}
+
+function App() {
+  const pathname = window.location.pathname;
+  const isDevRoute = pathname === "/dev";
+  const isDevPageEnabled =
+    import.meta.env.DEV && import.meta.env.VITE_ENABLE_DEV_PAGE === "true";
+
+  if (isDevRoute) {
+    if (!isDevPageEnabled) {
+      return (
+        <main className="container">
+          <h1>Not Found</h1>
+        </main>
+      );
+    }
+    return <DevPage />;
+  }
+
+  return <EventPage />;
 }
 
 export default App;

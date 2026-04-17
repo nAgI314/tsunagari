@@ -17,6 +17,8 @@ type UserRepositoryLike = {
   create: (payload: UserPayload) => User
   save: (user: User) => Promise<User>
   findOneBy: (where: { id: string }) => Promise<User | null>
+  find: () => Promise<User[]>
+  remove: (user: User) => Promise<User>
 }
 
 const buildEvent = (input: CreateEventInput): ScheduleEvent => {
@@ -66,9 +68,45 @@ const mapUser = (user: User) => ({
   name: user.name,
 })
 
+const validateUserPatchPayload = (value: unknown) => {
+  if (typeof value !== "object" || value === null) {
+    return { ok: false as const, message: "Body must be an object." }
+  }
+  const candidate = value as Record<string, unknown>
+  const hasEmail = candidate.email !== undefined
+  const hasName = candidate.name !== undefined
+  if (!hasEmail && !hasName) {
+    return { ok: false as const, message: "email or name is required." }
+  }
+  if (hasEmail && (typeof candidate.email !== "string" || candidate.email.trim().length === 0)) {
+    return { ok: false as const, message: "email must be a non-empty string." }
+  }
+  if (
+    hasName &&
+    candidate.name !== null &&
+    (typeof candidate.name !== "string" || candidate.name.trim().length === 0)
+  ) {
+    return { ok: false as const, message: "name must be a non-empty string or null." }
+  }
+  return {
+    ok: true as const,
+    value: {
+      email: typeof candidate.email === "string" ? candidate.email.trim() : undefined,
+      name:
+        candidate.name === null
+          ? null
+          : typeof candidate.name === "string"
+            ? candidate.name.trim()
+            : undefined,
+    },
+  }
+}
+
 export const createApp = (userRepository?: UserRepositoryLike) => {
   const app = express()
   app.use(express.json())
+  const isDevApiEnabled =
+    process.env.NODE_ENV === "development" && process.env.DEV_API_ENABLED === "true"
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" })
@@ -85,7 +123,26 @@ export const createApp = (userRepository?: UserRepositoryLike) => {
     res.status(201).json({ event })
   })
 
-  app.post("/api/users", async (req, res) => {
+  app.use("/api/dev", (_req, res, next) => {
+    if (!isDevApiEnabled) {
+      res.status(404).json({ error: "Not found." })
+      return
+    }
+    next()
+  })
+
+  app.get("/api/dev/users", async (_req, res) => {
+    try {
+      const repository = userRepository ?? AppDataSource.getRepository(User)
+      const users = await repository.find()
+      res.json({ users: users.map(mapUser) })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to list users."
+      res.status(500).json({ error: message })
+    }
+  })
+
+  app.post("/api/dev/users", async (req, res) => {
     const parsed = validateUserPayload(req.body)
     if (!parsed.ok) {
       res.status(400).json({ error: parsed.message })
@@ -103,7 +160,7 @@ export const createApp = (userRepository?: UserRepositoryLike) => {
     }
   })
 
-  app.get("/api/users/:id", async (req, res) => {
+  app.get("/api/dev/users/:id", async (req, res) => {
     try {
       const repository = userRepository ?? AppDataSource.getRepository(User)
       const user = await repository.findOneBy({ id: req.params.id })
@@ -118,12 +175,60 @@ export const createApp = (userRepository?: UserRepositoryLike) => {
     }
   })
 
+  app.patch("/api/dev/users/:id", async (req, res) => {
+    const parsed = validateUserPatchPayload(req.body)
+    if (!parsed.ok) {
+      res.status(400).json({ error: parsed.message })
+      return
+    }
+    try {
+      const repository = userRepository ?? AppDataSource.getRepository(User)
+      const user = await repository.findOneBy({ id: req.params.id })
+      if (!user) {
+        res.status(404).json({ error: "User not found." })
+        return
+      }
+
+      if (parsed.value.email !== undefined) {
+        user.email = parsed.value.email
+      }
+      if (parsed.value.name !== undefined) {
+        user.name = parsed.value.name
+      }
+
+      const updated = await repository.save(user)
+      res.json({ user: mapUser(updated) })
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to update user."
+      res.status(500).json({ error: message })
+    }
+  })
+
+  app.delete("/api/dev/users/:id", async (req, res) => {
+    try {
+      const repository = userRepository ?? AppDataSource.getRepository(User)
+      const user = await repository.findOneBy({ id: req.params.id })
+      if (!user) {
+        res.status(404).json({ error: "User not found." })
+        return
+      }
+      await repository.remove(user)
+      res.status(204).send()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to delete user."
+      res.status(500).json({ error: message })
+    }
+  })
+
   return app
 }
 
 export const startServer = async () => {
   if (!AppDataSource.isInitialized) {
     await AppDataSource.initialize()
+  }
+  if (process.env.NODE_ENV === "development") {
+    await AppDataSource.runMigrations()
   }
 
   const app = createApp()

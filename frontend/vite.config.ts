@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import path from 'path/win32'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -9,9 +10,9 @@ export default defineConfig({
       "/api": "http://localhost:3000",
     },
   },
-  test: {
-    environment: 'jsdom',
-    setupFiles: './src/test/setup.ts',
-    globals: true,
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
   },
 })

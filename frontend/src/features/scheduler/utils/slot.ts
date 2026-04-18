@@ -1,13 +1,24 @@
 import type { AnswerStatus, TimeSlot } from "../model/types";
 import { dateKey } from "./date";
 
-export function slotKey(slot: TimeSlot): string {
-  return `${dateKey(slot.start)}-${slot.start.getHours()}-${slot.end.getHours()}`;
+export function slotStartKey(slot: TimeSlot): string {
+  return slotStartKeyForTime(slot.start, slot.start.getHours(), slot.start.getMinutes());
 }
 
-export function toHourSlot(day: Date, hour: number): TimeSlot {
-  const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, 0, 0, 0);
-  const end = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour + 1, 0, 0, 0);
+export function slotStartKeyForTime(day: Date, hour: number, minute: number): string {
+  return `${dateKey(day)}-${hour.toString().padStart(2, "0")}-${minute
+    .toString()
+    .padStart(2, "0")}`;
+}
+
+export function toTimeSlot(
+  day: Date,
+  hour: number,
+  minute: number,
+  durationMinutes: number,
+): TimeSlot {
+  const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, minute, 0, 0);
+  const end = new Date(start.getTime() + durationMinutes * 60 * 1000);
   return {
     id: `slot-${start.getTime()}`,
     start,

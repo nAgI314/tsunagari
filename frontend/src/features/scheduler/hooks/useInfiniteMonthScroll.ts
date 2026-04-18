@@ -64,10 +64,26 @@ export function useInfiniteMonthScroll(baseDate: Date) {
     setMonthAnchor(addMonths(startOfMonth(baseDate), monthIndex));
   };
 
+  const jumpToCurrentMonth = () => {
+    setMonthWindow({
+      min: -MONTH_WINDOW_PADDING,
+      max: MONTH_WINDOW_PADDING,
+    });
+    setMonthAnchor(startOfMonth(baseDate));
+    requestAnimationFrame(() => {
+      const scroller = monthScrollerRef.current;
+      if (!scroller) {
+        return;
+      }
+      scroller.scrollTop = scroller.scrollHeight / 2 - scroller.clientHeight / 2;
+    });
+  };
+
   return {
     monthOffsets,
     currentMonthStart: monthAnchor,
     monthScrollerRef,
     onMonthScroll,
+    jumpToCurrentMonth,
   };
 }

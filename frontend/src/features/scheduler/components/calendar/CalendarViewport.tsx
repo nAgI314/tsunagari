@@ -17,7 +17,7 @@ type Props = {
   slotByKey: Map<string, CandidateSlot>;
   candidateSlots: CandidateSlot[];
   googleEvents: GoogleEvent[];
-  onWeekCellClick: (day: Date, hour: number) => void;
+  onWeekCellClick: (day: Date, hour: number, minute: number) => void;
   onMonthDayClick: (day: Date) => void;
 };
 

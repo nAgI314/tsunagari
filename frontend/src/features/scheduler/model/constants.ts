@@ -1,7 +1,9 @@
 export const HOUR_HEIGHT = 40;
-export const START_HOUR = 9;
-export const END_HOUR = 19;
+export const START_HOUR = 0;
+export const END_HOUR = 24;
 export const HOURS = END_HOUR - START_HOUR;
+export const DEFAULT_VISIBLE_START_HOUR = 9;
+export const WEEK_HEADER_HEIGHT = 56;
 export const WEEK_WINDOW_PADDING = 8;
 export const MONTH_WINDOW_PADDING = 8;
 export const WEEK_BOARD_WIDTH = 980;

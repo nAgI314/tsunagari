@@ -1,49 +1,50 @@
 import { useMemo, useState } from "react";
 import type { CandidateSlot, ScreenMode, ViewMode } from "../model/types";
 import { addDays, startOfWeek, timeLabel } from "../utils/date";
-import { shiftAnswer, slotKey, toHourSlot } from "../utils/slot";
+import { shiftAnswer, slotStartKey, toTimeSlot } from "../utils/slot";
 
 export function useSchedulerState(now: Date) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [screenMode, setScreenMode] = useState<ScreenMode>("create");
+  const [slotDurationMinutes, setSlotDurationMinutes] = useState(60);
 
   const [candidateSlots, setCandidateSlots] = useState<CandidateSlot[]>([
-    toHourSlot(addDays(startOfWeek(now), 1), 10),
-    toHourSlot(addDays(startOfWeek(now), 2), 14),
-    toHourSlot(addDays(startOfWeek(now), 4), 10),
+    toTimeSlot(addDays(startOfWeek(now), 1), 10, 0, 60),
+    toTimeSlot(addDays(startOfWeek(now), 2), 14, 0, 60),
+    toTimeSlot(addDays(startOfWeek(now), 4), 10, 0, 60),
   ]);
 
   const slotByKey = useMemo(() => {
     const map = new Map<string, CandidateSlot>();
     for (const slot of candidateSlots) {
-      map.set(slotKey(slot), slot);
+      map.set(slotStartKey(slot), slot);
     }
     return map;
   }, [candidateSlots]);
 
-  const onWeekCellClick = (day: Date, hour: number) => {
-    const next = toHourSlot(day, hour);
-    const key = slotKey(next);
+  const onWeekCellClick = (day: Date, hour: number, minute: number) => {
+    const next = toTimeSlot(day, hour, minute, slotDurationMinutes);
+    const key = slotStartKey(next);
 
     setCandidateSlots((prev) => {
-      const existing = prev.find((slot) => slotKey(slot) === key);
+      const existing = prev.find((slot) => slotStartKey(slot) === key);
       if (!existing) {
         return [...prev, screenMode === "create" ? next : { ...next, answer: "ok" }];
       }
 
       if (screenMode === "create") {
-        return prev.filter((slot) => slotKey(slot) !== key);
+        return prev.filter((slot) => slotStartKey(slot) !== key);
       }
 
       return prev.map((slot) =>
-        slotKey(slot) === key ? { ...slot, answer: shiftAnswer(slot.answer) } : slot,
+        slotStartKey(slot) === key ? { ...slot, answer: shiftAnswer(slot.answer) } : slot,
       );
     });
   };
 
   const onMonthDayClick = (day: Date) => {
-    onWeekCellClick(day, 10);
+    onWeekCellClick(day, 10, 0);
   };
 
   const onCandidateSlotClick = (targetSlot: CandidateSlot) => {
@@ -67,10 +68,12 @@ export function useSchedulerState(now: Date) {
     isLoggedIn,
     viewMode,
     screenMode,
+    slotDurationMinutes,
     candidateSlots,
     slotByKey,
     setViewMode,
     setScreenMode,
+    setSlotDurationMinutes,
     toggleLogin: () => setIsLoggedIn((prev) => !prev),
     onWeekCellClick,
     onMonthDayClick,

@@ -19,10 +19,12 @@ export function SchedulerPage() {
     viewMode,
     screenMode,
     isLoggedIn,
+    slotDurationMinutes,
     candidateSlots,
     slotByKey,
     setViewMode,
     setScreenMode,
+    setSlotDurationMinutes,
     toggleLogin,
     onWeekCellClick,
     onMonthDayClick,
@@ -30,9 +32,14 @@ export function SchedulerPage() {
     slotSummaryLabel,
   } = useSchedulerState(now);
 
-  const { weekOffsets, currentWeekStart, weekScrollerRef, onWeekScroll } =
-    useInfiniteWeekScroll(now);
-  const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll } =
+  const {
+    weekOffsets,
+    currentWeekStart,
+    weekScrollerRef,
+    onWeekScroll,
+    jumpToCurrentWeek,
+  } = useInfiniteWeekScroll(now);
+  const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
 
   return (
@@ -61,28 +68,34 @@ export function SchedulerPage() {
                   ? "左右スクロールで週を無限に移動"
                   : "上下スクロールで月を無限に移動"
               }
+              onJumpToToday={viewMode === "week" ? jumpToCurrentWeek : jumpToCurrentMonth}
             />
-            <CalendarViewport
-              viewMode={viewMode}
-              now={now}
-              weekOffsets={weekOffsets}
-              monthOffsets={monthOffsets}
-              weekScrollerRef={weekScrollerRef}
-              monthScrollerRef={monthScrollerRef}
-              onWeekScroll={onWeekScroll}
-              onMonthScroll={onMonthScroll}
-              screenMode={screenMode}
-              isLoggedIn={isLoggedIn}
-              slotByKey={slotByKey}
-              candidateSlots={candidateSlots}
-              googleEvents={SAMPLE_EVENTS}
-              onWeekCellClick={onWeekCellClick}
-              onMonthDayClick={onMonthDayClick}
-            />
+            <div className="tsu-calendar-viewport">
+              <CalendarViewport
+                viewMode={viewMode}
+                now={now}
+                weekOffsets={weekOffsets}
+                monthOffsets={monthOffsets}
+                weekScrollerRef={weekScrollerRef}
+                monthScrollerRef={monthScrollerRef}
+                onWeekScroll={onWeekScroll}
+                onMonthScroll={onMonthScroll}
+                screenMode={screenMode}
+                isLoggedIn={isLoggedIn}
+                slotByKey={slotByKey}
+                candidateSlots={candidateSlots}
+                googleEvents={SAMPLE_EVENTS}
+                onWeekCellClick={onWeekCellClick}
+                onMonthDayClick={onMonthDayClick}
+              />
+            </div>
           </div>
 
           <aside className="tsu-side">
-            <EventInfoPanel />
+            <EventInfoPanel
+              slotDurationMinutes={slotDurationMinutes}
+              onSlotDurationChange={(minutes) => setSlotDurationMinutes(minutes)}
+            />
             <CandidateSlotPanel
               candidateSlots={candidateSlots}
               screenMode={screenMode}

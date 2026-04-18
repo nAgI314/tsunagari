@@ -48,14 +48,58 @@ export function useSchedulerState(now: Date) {
   };
 
   const onCandidateSlotClick = (targetSlot: CandidateSlot) => {
+    onCandidateSlotClickById(targetSlot.id);
+  };
+
+  const onCandidateSlotClickById = (slotId: string) => {
     if (screenMode !== "answer") {
       return;
     }
 
     setCandidateSlots((prev) =>
       prev.map((slot) =>
-        slot.id === targetSlot.id ? { ...slot, answer: shiftAnswer(slot.answer) } : slot,
+        slot.id === slotId ? { ...slot, answer: shiftAnswer(slot.answer) } : slot,
       ),
+    );
+  };
+
+  const removeCandidateSlot = (slotId: string) => {
+    setCandidateSlots((prev) => prev.filter((slot) => slot.id !== slotId));
+  };
+
+  const moveCandidateSlot = (slotId: string, day: Date, hour: number, minute: number) => {
+    setCandidateSlots((prev) =>
+      prev.map((slot) => {
+        if (slot.id !== slotId) {
+          return slot;
+        }
+
+        const durationMs = slot.end.getTime() - slot.start.getTime();
+        const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0, 0);
+        const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 24, 0, 0, 0);
+        const desiredStart = new Date(
+          day.getFullYear(),
+          day.getMonth(),
+          day.getDate(),
+          hour,
+          minute,
+          0,
+          0,
+        );
+        const latestStart = new Date(dayEnd.getTime() - durationMs);
+        const clampedStart =
+          desiredStart.getTime() < dayStart.getTime()
+            ? dayStart
+            : desiredStart.getTime() > latestStart.getTime()
+              ? latestStart
+              : desiredStart;
+
+        return {
+          ...slot,
+          start: clampedStart,
+          end: new Date(clampedStart.getTime() + durationMs),
+        };
+      }),
     );
   };
 
@@ -78,6 +122,9 @@ export function useSchedulerState(now: Date) {
     onWeekCellClick,
     onMonthDayClick,
     onCandidateSlotClick,
+    onCandidateSlotClickById,
+    removeCandidateSlot,
+    moveCandidateSlot,
     slotSummaryLabel,
   };
 }

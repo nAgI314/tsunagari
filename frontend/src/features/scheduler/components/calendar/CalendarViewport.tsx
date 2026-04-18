@@ -19,6 +19,9 @@ type Props = {
   googleEvents: GoogleEvent[];
   onWeekCellClick: (day: Date, hour: number, minute: number) => void;
   onMonthDayClick: (day: Date) => void;
+  onCandidateSlotClickById: (slotId: string) => void;
+  onRemoveCandidateSlot: (slotId: string) => void;
+  onMoveCandidateSlot: (slotId: string, day: Date, hour: number, minute: number) => void;
 };
 
 export function CalendarViewport({
@@ -37,6 +40,9 @@ export function CalendarViewport({
   googleEvents,
   onWeekCellClick,
   onMonthDayClick,
+  onCandidateSlotClickById,
+  onRemoveCandidateSlot,
+  onMoveCandidateSlot,
 }: Props) {
   if (viewMode === "week") {
     return (
@@ -50,6 +56,9 @@ export function CalendarViewport({
         slotByKey={slotByKey}
         googleEvents={googleEvents}
         onWeekCellClick={onWeekCellClick}
+        onCandidateSlotClickById={onCandidateSlotClickById}
+        onRemoveCandidateSlot={onRemoveCandidateSlot}
+        onMoveCandidateSlot={onMoveCandidateSlot}
       />
     );
   }

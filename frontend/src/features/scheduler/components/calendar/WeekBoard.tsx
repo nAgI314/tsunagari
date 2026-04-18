@@ -1,4 +1,5 @@
-import type { MouseEvent } from "react";
+import { useState } from "react";
+import type { DragEvent, MouseEvent } from "react";
 import { HOUR_HEIGHT, HOURS, START_HOUR, WEEKDAY_SHORT } from "../../model/constants";
 import type { CandidateSlot, GoogleEvent, ScreenMode } from "../../model/types";
 import { addDays, dateKey, sameDay, timeLabel } from "../../utils/date";
@@ -12,6 +13,9 @@ type Props = {
   slotByKey: Map<string, CandidateSlot>;
   googleEvents: GoogleEvent[];
   onWeekCellClick: (day: Date, hour: number, minute: number) => void;
+  onCandidateSlotClickById: (slotId: string) => void;
+  onRemoveCandidateSlot: (slotId: string) => void;
+  onMoveCandidateSlot: (slotId: string, day: Date, hour: number, minute: number) => void;
 };
 
 function slotStatusLabel(slot: CandidateSlot): string {
@@ -58,8 +62,32 @@ export function WeekBoard({
   slotByKey,
   googleEvents,
   onWeekCellClick,
+  onCandidateSlotClickById,
+  onRemoveCandidateSlot,
+  onMoveCandidateSlot,
 }: Props) {
   const days = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
+  const [draggingSlotId, setDraggingSlotId] = useState<string | null>(null);
+
+  const minuteFromOffsetY = (offsetY: number): number => {
+    const raw = Math.floor((offsetY / HOUR_HEIGHT) * 12) * 5;
+    return Math.max(0, Math.min(55, raw));
+  };
+
+  const onDayDrop = (event: DragEvent<HTMLDivElement>, day: Date) => {
+    if (!draggingSlotId || screenMode !== "create") {
+      return;
+    }
+
+    event.preventDefault();
+    const rect = event.currentTarget.getBoundingClientRect();
+    const offsetY = event.clientY - rect.top;
+    const clampedY = Math.max(0, Math.min(HOURS * HOUR_HEIGHT - 1, offsetY));
+    const hour = START_HOUR + Math.floor(clampedY / HOUR_HEIGHT);
+    const minute = minuteFromOffsetY(clampedY % HOUR_HEIGHT);
+    onMoveCandidateSlot(draggingSlotId, day, hour, minute);
+    setDraggingSlotId(null);
+  };
 
   return (
     <section className="tsu-week-board">
@@ -88,7 +116,17 @@ export function WeekBoard({
           );
 
           return (
-            <div className="tsu-day-col" key={dateKey(day)}>
+            <div
+              className="tsu-day-col"
+              key={dateKey(day)}
+              onDragOver={(event) => {
+                if (screenMode !== "create") {
+                  return;
+                }
+                event.preventDefault();
+              }}
+              onDrop={(event) => onDayDrop(event, day)}
+            >
               {Array.from({ length: HOURS }, (_, hourOffset) => {
                 const hour = START_HOUR + hourOffset;
                 return (
@@ -105,11 +143,27 @@ export function WeekBoard({
                   <article
                     key={slot.id}
                     className={`tsu-candidate-slot ${slotStatusClass(slot)}`}
+                    draggable={screenMode === "create"}
+                    onDragStart={() => setDraggingSlotId(slot.id)}
+                    onDragEnd={() => setDraggingSlotId(null)}
+                    onClick={() => onCandidateSlotClickById(slot.id)}
                     style={{
                       top: toTopPx(dayBase, slot.start),
                       height: toHeightPx(slot.start, slot.end),
                     }}
                   >
+                    {screenMode === "create" && (
+                      <button
+                        className="tsu-slot-delete"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRemoveCandidateSlot(slot.id);
+                        }}
+                        type="button"
+                      >
+                        ✕
+                      </button>
+                    )}
                     <span>{`${timeLabel(slot.start)} - ${timeLabel(slot.end)}`}</span>
                     {screenMode === "answer" && (
                       <span className="tsu-status">{slotStatusLabel(slot)}</span>

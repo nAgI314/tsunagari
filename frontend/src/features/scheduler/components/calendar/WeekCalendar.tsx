@@ -14,6 +14,9 @@ type Props = {
   slotByKey: Map<string, CandidateSlot>;
   googleEvents: GoogleEvent[];
   onWeekCellClick: (day: Date, hour: number, minute: number) => void;
+  onCandidateSlotClickById: (slotId: string) => void;
+  onRemoveCandidateSlot: (slotId: string) => void;
+  onMoveCandidateSlot: (slotId: string, day: Date, hour: number, minute: number) => void;
 };
 
 export function WeekCalendar({
@@ -26,6 +29,9 @@ export function WeekCalendar({
   slotByKey,
   googleEvents,
   onWeekCellClick,
+  onCandidateSlotClickById,
+  onRemoveCandidateSlot,
+  onMoveCandidateSlot,
 }: Props) {
   return (
     <div className="tsu-week-layout">
@@ -51,6 +57,9 @@ export function WeekCalendar({
             slotByKey={slotByKey}
             googleEvents={googleEvents}
             onWeekCellClick={onWeekCellClick}
+            onCandidateSlotClickById={onCandidateSlotClickById}
+            onRemoveCandidateSlot={onRemoveCandidateSlot}
+            onMoveCandidateSlot={onMoveCandidateSlot}
           />
         ))}
       </div>

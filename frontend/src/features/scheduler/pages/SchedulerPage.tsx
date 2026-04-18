@@ -29,6 +29,9 @@ export function SchedulerPage() {
     onWeekCellClick,
     onMonthDayClick,
     onCandidateSlotClick,
+    onCandidateSlotClickById,
+    removeCandidateSlot,
+    moveCandidateSlot,
     slotSummaryLabel,
   } = useSchedulerState(now);
 
@@ -87,6 +90,9 @@ export function SchedulerPage() {
                 googleEvents={SAMPLE_EVENTS}
                 onWeekCellClick={onWeekCellClick}
                 onMonthDayClick={onMonthDayClick}
+                onCandidateSlotClickById={onCandidateSlotClickById}
+                onRemoveCandidateSlot={removeCandidateSlot}
+                onMoveCandidateSlot={moveCandidateSlot}
               />
             </div>
           </div>

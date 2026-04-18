@@ -1,5 +1,5 @@
 :root {
-  --tsu-bg: #f4f7fb;
+  --tsu-bg: #f2f3f5;
   --tsu-panel: #ffffff;
   --tsu-border: #d9e3ef;
   --tsu-soft-border: #e8eef6;
@@ -19,10 +19,7 @@
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at 10% -10%, #dceeff 0, transparent 45%),
-    radial-gradient(circle at 90% 0%, #ffe9d4 0, transparent 42%),
-    var(--tsu-bg);
+  background: var(--tsu-bg);
   color: var(--tsu-text);
 }
 
@@ -128,6 +125,18 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tsu-bg: #181a1f;
+    --tsu-panel: #20242c;
+    --tsu-border: #323a48;
+    --tsu-soft-border: #2a303b;
+    --tsu-text: #e7edf8;
+    --tsu-subtext: #aab4c7;
+  }
 }
 
 .tsu-calendar-viewport {
@@ -142,7 +151,7 @@ body {
   gap: 8px;
   padding: 10px 14px;
   border-bottom: 1px solid var(--tsu-soft-border);
-  background: #f8fbff;
+  background: var(--tsu-bg);
 }
 
 .tsu-period-main {
@@ -162,7 +171,7 @@ body {
 
 .tsu-today-button {
   border: 1px solid var(--tsu-border);
-  background: white;
+  background: var(--tsu-panel);
   color: var(--tsu-primary);
   border-radius: 8px;
   padding: 6px 10px;
@@ -172,7 +181,7 @@ body {
 }
 
 .tsu-today-button:hover {
-  background: #eef5ff;
+  filter: brightness(0.98);
 }
 
 .tsu-week-layout {
@@ -188,7 +197,7 @@ body {
   flex: 0 0 54px;
   width: 54px;
   border-right: 1px solid var(--tsu-soft-border);
-  background: #fcfdff;
+  background: var(--tsu-panel);
   display: flex;
   flex-direction: column;
   min-height: fit-content;
@@ -200,7 +209,7 @@ body {
   z-index: 6;
   height: 56px;
   box-sizing: border-box;
-  background: #fcfdff;
+  background: var(--tsu-panel);
   border-bottom: 1px solid var(--tsu-soft-border);
 }
 
@@ -253,7 +262,7 @@ body {
   z-index: 6;
   height: 56px;
   box-sizing: border-box;
-  background: #fff;
+  background: var(--tsu-panel);
   border-bottom: 1px solid var(--tsu-soft-border);
 }
 
@@ -398,7 +407,7 @@ body {
   padding: 8px;
   height: 100%;
   min-height: 0;
-  background: #fbfdff;
+  background: var(--tsu-bg);
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -412,7 +421,7 @@ body {
   border-radius: 12px;
   overflow: hidden;
   margin-bottom: 12px;
-  background: white;
+  background: var(--tsu-panel);
 }
 
 .tsu-month-board h3 {
@@ -509,7 +518,7 @@ body {
 .tsu-side {
   display: flex;
   flex-direction: column;
-  background: #f9fbff;
+  background: var(--tsu-bg);
 }
 
 .tsu-panel {
@@ -547,7 +556,14 @@ body {
   padding: 7px 8px;
   font-size: 12px;
   box-sizing: border-box;
-  background: white;
+  color: var(--tsu-text);
+  background: var(--tsu-panel);
+  caret-color: var(--tsu-text);
+}
+
+.tsu-panel input::placeholder,
+.tsu-panel textarea::placeholder {
+  color: var(--tsu-subtext);
 }
 
 .tsu-panel textarea {

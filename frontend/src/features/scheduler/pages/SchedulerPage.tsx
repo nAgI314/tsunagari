@@ -136,8 +136,8 @@ export function SchedulerPage() {
               }
               hint={
                 viewMode === "week"
-                  ? "左右スクロールで週を無限に移動"
-                  : "上下スクロールで月を無限に移動"
+                  ? "左右スクロールで週を移動"
+                  : "上下スクロールで月を移動"
               }
               onJumpToToday={viewMode === "week" ? jumpToCurrentWeek : jumpToCurrentMonth}
             />

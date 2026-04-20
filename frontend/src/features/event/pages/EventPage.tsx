@@ -183,8 +183,8 @@ export function EventPage({ linkId }: EventPageProps) {
             <PeriodBar
               hint={
                 viewMode === "week"
-                  ? "左右スクロールで週を無限に移動"
-                  : "上下スクロールで月を無限に移動"
+                  ? "左右スクロールで週を移動"
+                  : "上下スクロールで月を移動"
               }
               label={viewMode === "week" ? formatWeekPeriod(currentWeekStart) : formatMonthLabel(currentMonthStart)}
               onJumpToToday={viewMode === "week" ? jumpToCurrentWeek : jumpToCurrentMonth}

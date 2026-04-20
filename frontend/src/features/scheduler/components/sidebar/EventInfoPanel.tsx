@@ -1,4 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 type Props = {
   slotDurationMinutes: number;
@@ -29,30 +32,31 @@ export function EventInfoPanel({ slotDurationMinutes, onSlotDurationChange }: Pr
       <h2>イベント情報</h2>
       <label>
         タイトル
-        <input defaultValue="チームキックオフ" />
+        <Input defaultValue="チームキックオフ" />
       </label>
       <label>
         説明
-        <textarea defaultValue="Googleカレンダーの予定と重ねて候補日を調整します。" />
+        <Textarea defaultValue="Googleカレンダーの予定と重ねて候補日を調整します。" />
       </label>
       <label>
         回答期限
-        <input defaultValue="2026-04-30" />
+        <Input defaultValue="2026-04-30" />
       </label>
       <label>
         候補の長さ
         <div className="tsu-duration-picker" ref={pickerRef}>
-          <button
-            className="tsu-duration-trigger"
+          <Button
+            className="w-full justify-start"
             onClick={() => setIsPickerOpen((prev) => !prev)}
             type="button"
+            variant="outline"
           >
             {slotDurationMinutes}分
-          </button>
+          </Button>
           {isPickerOpen && (
             <div className="tsu-duration-popover" role="listbox" aria-label="候補の長さ選択">
               {durationOptions.map((minutes) => (
-                <button
+                <Button
                   key={minutes}
                   className={`tsu-duration-option ${minutes === slotDurationMinutes ? "active" : ""}`}
                   onClick={() => {
@@ -60,9 +64,10 @@ export function EventInfoPanel({ slotDurationMinutes, onSlotDurationChange }: Pr
                     setIsPickerOpen(false);
                   }}
                   type="button"
+                  variant="ghost"
                 >
                   {minutes}分
-                </button>
+                </Button>
               ))}
             </div>
           )}

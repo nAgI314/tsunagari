@@ -3,6 +3,7 @@ import type { DragEvent, MouseEvent } from "react";
 import { HOUR_HEIGHT, HOURS, START_HOUR, WEEKDAY_SHORT } from "../../model/constants";
 import type { CandidateSlot, GoogleEvent, ScreenMode } from "../../model/types";
 import { addDays, dateKey, sameDay, timeLabel } from "../../utils/date";
+import { Button } from "@/components/ui/button";
 import { GoogleEventLayer } from "./GoogleEventLayer";
 
 type Props = {
@@ -153,16 +154,17 @@ export function WeekBoard({
                     }}
                   >
                     {screenMode === "create" && (
-                      <button
+                      <Button
                         className="tsu-slot-delete"
                         onClick={(event) => {
                           event.stopPropagation();
                           onRemoveCandidateSlot(slot.id);
                         }}
                         type="button"
+                        variant="ghost"
                       >
                         ✕
-                      </button>
+                      </Button>
                     )}
                     <span>{`${timeLabel(slot.start)} - ${timeLabel(slot.end)}`}</span>
                     {screenMode === "answer" && (

@@ -351,6 +351,16 @@ body {
   pointer-events: none;
 }
 
+.tsu-drag-preview {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  border: 1px dashed var(--tsu-primary);
+  border-left-width: 3px;
+  border-radius: 4px;
+  background: rgba(24, 95, 165, 0.08);
+}
+
 .tsu-candidate-slot {
   position: absolute;
   left: 3px;

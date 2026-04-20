@@ -86,10 +86,29 @@ export function WeekBoard({
 }: Props) {
   const days = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   const [draggingSlotId, setDraggingSlotId] = useState<string | null>(null);
+  const [dragGrabOffsetPx, setDragGrabOffsetPx] = useState(0);
+  const [dragPreview, setDragPreview] = useState<{ dayKey: string; top: number; height: number } | null>(
+    null,
+  );
 
-  const minuteFromOffsetY = (offsetY: number): number => {
-    const raw = Math.floor((offsetY / HOUR_HEIGHT) * 12) * 5;
-    return Math.max(0, Math.min(55, raw));
+  const draggedSlot = draggingSlotId
+    ? Array.from(slotByKey.values()).find((slot) => slot.id === draggingSlotId) ?? null
+    : null;
+  const draggedDurationMinutes = draggedSlot
+    ? (draggedSlot.end.getTime() - draggedSlot.start.getTime()) / (1000 * 60)
+    : 0;
+  const draggedHeightPx = Math.max(16, (draggedDurationMinutes / 60) * HOUR_HEIGHT);
+
+  const getDropPosition = (clientY: number, columnTop: number) => {
+    const offsetFromTop = clientY - columnTop - dragGrabOffsetPx;
+    const maxY = HOURS * HOUR_HEIGHT - draggedHeightPx;
+    const clampedY = Math.max(0, Math.min(maxY, offsetFromTop));
+    const totalMinutes = (clampedY / HOUR_HEIGHT) * 60;
+    const snappedMinutes = Math.floor(totalMinutes / 5) * 5;
+    const snappedTop = (snappedMinutes / 60) * HOUR_HEIGHT;
+    const hour = START_HOUR + Math.floor(snappedMinutes / 60);
+    const minute = snappedMinutes % 60;
+    return { hour, minute, top: snappedTop };
   };
 
   const onDayDrop = (event: DragEvent<HTMLDivElement>, day: Date) => {
@@ -99,12 +118,11 @@ export function WeekBoard({
 
     event.preventDefault();
     const rect = event.currentTarget.getBoundingClientRect();
-    const offsetY = event.clientY - rect.top;
-    const clampedY = Math.max(0, Math.min(HOURS * HOUR_HEIGHT - 1, offsetY));
-    const hour = START_HOUR + Math.floor(clampedY / HOUR_HEIGHT);
-    const minute = minuteFromOffsetY(clampedY % HOUR_HEIGHT);
+    const { hour, minute } = getDropPosition(event.clientY, rect.top);
     onMoveCandidateSlot(draggingSlotId, day, hour, minute);
     setDraggingSlotId(null);
+    setDragGrabOffsetPx(0);
+    setDragPreview(null);
   };
   return (
     <section className="tsu-week-board">
@@ -141,6 +159,15 @@ export function WeekBoard({
                   return;
                 }
                 event.preventDefault();
+                if (!draggingSlotId || !draggedSlot) {
+                  return;
+                }
+                const { top } = getDropPosition(event.clientY, event.currentTarget.getBoundingClientRect().top);
+                setDragPreview({
+                  dayKey: dateKey(day),
+                  top,
+                  height: draggedHeightPx,
+                });
               }}
               onDrop={(event) => onDayDrop(event, day)}
             >
@@ -156,6 +183,15 @@ export function WeekBoard({
                 );
               })}
               <div className="tsu-slot-layer" aria-hidden>
+                {dragPreview?.dayKey === dateKey(day) && (
+                  <div
+                    className="tsu-drag-preview"
+                    style={{
+                      top: dragPreview.top,
+                      height: dragPreview.height,
+                    }}
+                  />
+                )}
                 {daySlots.map((slot) => (
                   (() => {
                     const answer = getSlotAnswer ? getSlotAnswer(slot) : slot.answer;
@@ -172,8 +208,20 @@ export function WeekBoard({
                             : ""
                         }`}
                         draggable={screenMode === "create"}
-                        onDragStart={() => setDraggingSlotId(slot.id)}
-                        onDragEnd={() => setDraggingSlotId(null)}
+                        onDragStart={(event) => {
+                          setDraggingSlotId(slot.id);
+                          setDragGrabOffsetPx(event.nativeEvent.offsetY);
+                          setDragPreview({
+                            dayKey: dateKey(day),
+                            top: toTopPx(dayBase, slot.start),
+                            height: toHeightPx(slot.start, slot.end),
+                          });
+                        }}
+                        onDragEnd={() => {
+                          setDraggingSlotId(null);
+                          setDragGrabOffsetPx(0);
+                          setDragPreview(null);
+                        }}
                         onClick={() => onCandidateSlotClickById(slot.id)}
                         style={{
                           top: toTopPx(dayBase, slot.start),

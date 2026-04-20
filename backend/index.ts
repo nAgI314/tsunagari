@@ -1,90 +1,15 @@
 import express from "express"
 import { type ScheduleEvent } from "../shared/src/index"
 import AppDataSource from "./src/data-source"
-import User from "./src/entities/User"
+import { type UserRepositoryLike } from "./src/routes/dev-users/common"
+import { registerDeleteDevUserRoute } from "./src/routes/dev-users/delete-user"
+import { registerGetDevUserByIdRoute } from "./src/routes/dev-users/get-user-by-id"
+import { registerListDevUsersRoute } from "./src/routes/dev-users/get-users"
+import { registerDevApiGuard } from "./src/routes/dev-users/guard-dev-api"
+import { registerPatchDevUserRoute } from "./src/routes/dev-users/patch-user"
+import { registerCreateDevUserRoute } from "./src/routes/dev-users/post-user"
 import { registerCreateEventRoute } from "./src/routes/events/post-event"
 import { registerUpdateEventRoute } from "./src/routes/events/put-event"
-
-type UserPayload = {
-  googleId: string
-  email: string
-  name?: string
-}
-
-type UserRepositoryLike = {
-  create: (payload: UserPayload) => User
-  save: (user: User) => Promise<User>
-  findOneBy: (where: { id: string }) => Promise<User | null>
-  find: () => Promise<User[]>
-  remove: (user: User) => Promise<User>
-}
-
-const validateUserPayload = (value: unknown) => {
-  if (typeof value !== "object" || value === null) {
-    return { ok: false as const, message: "Body must be an object." }
-  }
-
-  const candidate = value as Record<string, unknown>
-  if (typeof candidate.googleId !== "string" || candidate.googleId.trim().length === 0) {
-    return { ok: false as const, message: "googleId is required." }
-  }
-  if (typeof candidate.email !== "string" || candidate.email.trim().length === 0) {
-    return { ok: false as const, message: "email is required." }
-  }
-  if (candidate.name !== undefined && typeof candidate.name !== "string") {
-    return { ok: false as const, message: "name must be a string when provided." }
-  }
-
-  return {
-    ok: true as const,
-    value: {
-      googleId: candidate.googleId.trim(),
-      email: candidate.email.trim(),
-      name: typeof candidate.name === "string" ? candidate.name.trim() : undefined,
-    },
-  }
-}
-
-const mapUser = (user: User) => ({
-  id: user.id,
-  googleId: user.googleId,
-  email: user.email,
-  name: user.name,
-})
-
-const validateUserPatchPayload = (value: unknown) => {
-  if (typeof value !== "object" || value === null) {
-    return { ok: false as const, message: "Body must be an object." }
-  }
-  const candidate = value as Record<string, unknown>
-  const hasEmail = candidate.email !== undefined
-  const hasName = candidate.name !== undefined
-  if (!hasEmail && !hasName) {
-    return { ok: false as const, message: "email or name is required." }
-  }
-  if (hasEmail && (typeof candidate.email !== "string" || candidate.email.trim().length === 0)) {
-    return { ok: false as const, message: "email must be a non-empty string." }
-  }
-  if (
-    hasName &&
-    candidate.name !== null &&
-    (typeof candidate.name !== "string" || candidate.name.trim().length === 0)
-  ) {
-    return { ok: false as const, message: "name must be a non-empty string or null." }
-  }
-  return {
-    ok: true as const,
-    value: {
-      email: typeof candidate.email === "string" ? candidate.email.trim() : undefined,
-      name:
-        candidate.name === null
-          ? null
-          : typeof candidate.name === "string"
-            ? candidate.name.trim()
-            : undefined,
-    },
-  }
-}
 
 export const createApp = (userRepository?: UserRepositoryLike) => {
   const app = express()
@@ -100,102 +25,12 @@ export const createApp = (userRepository?: UserRepositoryLike) => {
   registerCreateEventRoute(app, inMemoryEvents)
   registerUpdateEventRoute(app, inMemoryEvents)
 
-  app.use("/api/dev", (_req, res, next) => {
-    if (!isDevApiEnabled) {
-      res.status(404).json({ error: "Not found." })
-      return
-    }
-    next()
-  })
-
-  app.get("/api/dev/users", async (_req, res) => {
-    try {
-      const repository = userRepository ?? AppDataSource.getRepository(User)
-      const users = await repository.find()
-      res.json({ users: users.map(mapUser) })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to list users."
-      res.status(500).json({ error: message })
-    }
-  })
-
-  app.post("/api/dev/users", async (req, res) => {
-    const parsed = validateUserPayload(req.body)
-    if (!parsed.ok) {
-      res.status(400).json({ error: parsed.message })
-      return
-    }
-
-    try {
-      const repository = userRepository ?? AppDataSource.getRepository(User)
-      const user = repository.create(parsed.value)
-      const created = await repository.save(user)
-      res.status(201).json({ user: mapUser(created) })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to create user."
-      res.status(500).json({ error: message })
-    }
-  })
-
-  app.get("/api/dev/users/:id", async (req, res) => {
-    try {
-      const repository = userRepository ?? AppDataSource.getRepository(User)
-      const user = await repository.findOneBy({ id: req.params.id })
-      if (!user) {
-        res.status(404).json({ error: "User not found." })
-        return
-      }
-      res.json({ user: mapUser(user) })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch user."
-      res.status(500).json({ error: message })
-    }
-  })
-
-  app.patch("/api/dev/users/:id", async (req, res) => {
-    const parsed = validateUserPatchPayload(req.body)
-    if (!parsed.ok) {
-      res.status(400).json({ error: parsed.message })
-      return
-    }
-    try {
-      const repository = userRepository ?? AppDataSource.getRepository(User)
-      const user = await repository.findOneBy({ id: req.params.id })
-      if (!user) {
-        res.status(404).json({ error: "User not found." })
-        return
-      }
-
-      if (parsed.value.email !== undefined) {
-        user.email = parsed.value.email
-      }
-      if (parsed.value.name !== undefined) {
-        user.name = parsed.value.name
-      }
-
-      const updated = await repository.save(user)
-      res.json({ user: mapUser(updated) })
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to update user."
-      res.status(500).json({ error: message })
-    }
-  })
-
-  app.delete("/api/dev/users/:id", async (req, res) => {
-    try {
-      const repository = userRepository ?? AppDataSource.getRepository(User)
-      const user = await repository.findOneBy({ id: req.params.id })
-      if (!user) {
-        res.status(404).json({ error: "User not found." })
-        return
-      }
-      await repository.remove(user)
-      res.status(204).send()
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to delete user."
-      res.status(500).json({ error: message })
-    }
-  })
+  registerDevApiGuard(app, isDevApiEnabled)
+  registerListDevUsersRoute(app, userRepository)
+  registerCreateDevUserRoute(app, userRepository)
+  registerGetDevUserByIdRoute(app, userRepository)
+  registerPatchDevUserRoute(app, userRepository)
+  registerDeleteDevUserRoute(app, userRepository)
 
   return app
 }

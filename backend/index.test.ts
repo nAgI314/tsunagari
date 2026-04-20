@@ -97,6 +97,30 @@ describe("backend api", () => {
     expect(updated.body.event.candidates).toHaveLength(1)
   })
 
+  test("GET /api/events/by-link/:linkId returns event", async () => {
+    const app = createApp(createUserRepositoryMock())
+    const created = await request(app).post("/api/events").send({
+      title: "初回打ち合わせ",
+      organizerName: "Kenta",
+      candidates: [
+        { start: "2026-04-20T10:00:00.000Z", end: "2026-04-20T10:30:00.000Z" },
+      ],
+    })
+    expect(created.status).toBe(201)
+
+    const fetched = await request(app).get(`/api/events/by-link/${created.body.event.linkId}`)
+    expect(fetched.status).toBe(200)
+    expect(fetched.body.event.id).toBe(created.body.event.id)
+    expect(fetched.body.event.linkId).toBe(created.body.event.linkId)
+  })
+
+  test("GET /api/events/by-link/:linkId returns 404 when event does not exist", async () => {
+    const app = createApp(createUserRepositoryMock())
+    const res = await request(app).get("/api/events/by-link/not-found-link")
+    expect(res.status).toBe(404)
+    expect(res.body.error).toBe("Event not found.")
+  })
+
   test("POST /api/dev/users creates user", async () => {
     const app = createApp(createUserRepositoryMock())
     const res = await request(app).post("/api/dev/users").send({

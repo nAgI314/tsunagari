@@ -1,7 +1,7 @@
 import type { RefObject } from "react";
 import { HOURS, START_HOUR } from "../../model/constants";
 import { addWeeks, startOfWeek } from "../../utils/date";
-import type { CandidateSlot, GoogleEvent, ScreenMode } from "../../model/types";
+import type { AnswerStatus, CandidateSlot, GoogleEvent, ScreenMode } from "../../model/types";
 import { WeekBoard } from "./WeekBoard";
 
 type Props = {
@@ -17,6 +17,8 @@ type Props = {
   onCandidateSlotClickById: (slotId: string) => void;
   onRemoveCandidateSlot: (slotId: string) => void;
   onMoveCandidateSlot: (slotId: string, day: Date, hour: number, minute: number) => void;
+  getSlotAnswer?: (slot: CandidateSlot) => AnswerStatus | undefined;
+  onSelectSlotAnswer?: (slotId: string, status: AnswerStatus) => void;
 };
 
 export function WeekCalendar({
@@ -32,6 +34,8 @@ export function WeekCalendar({
   onCandidateSlotClickById,
   onRemoveCandidateSlot,
   onMoveCandidateSlot,
+  getSlotAnswer,
+  onSelectSlotAnswer,
 }: Props) {
   return (
     <div className="tsu-week-layout">
@@ -57,11 +61,13 @@ export function WeekCalendar({
             slotByKey={slotByKey}
             googleEvents={googleEvents}
             onWeekCellClick={onWeekCellClick}
-            onCandidateSlotClickById={onCandidateSlotClickById}
-            onRemoveCandidateSlot={onRemoveCandidateSlot}
-            onMoveCandidateSlot={onMoveCandidateSlot}
-          />
-        ))}
+              onCandidateSlotClickById={onCandidateSlotClickById}
+              onRemoveCandidateSlot={onRemoveCandidateSlot}
+              onMoveCandidateSlot={onMoveCandidateSlot}
+              getSlotAnswer={getSlotAnswer}
+              onSelectSlotAnswer={onSelectSlotAnswer}
+            />
+          ))}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import { registerListDevUsersRoute } from "./src/routes/dev-users/get-users"
 import { registerDevApiGuard } from "./src/routes/dev-users/guard-dev-api"
 import { registerPatchDevUserRoute } from "./src/routes/dev-users/patch-user"
 import { registerCreateDevUserRoute } from "./src/routes/dev-users/post-user"
+import { registerGetEventByLinkRoute } from "./src/routes/events/get-event-by-link"
 import { registerCreateEventRoute } from "./src/routes/events/post-event"
 import { registerUpdateEventRoute } from "./src/routes/events/put-event"
 
@@ -23,6 +24,7 @@ export const createApp = (userRepository?: UserRepositoryLike) => {
   })
 
   registerCreateEventRoute(app, inMemoryEvents)
+  registerGetEventByLinkRoute(app, inMemoryEvents)
   registerUpdateEventRoute(app, inMemoryEvents)
 
   registerDevApiGuard(app, isDevApiEnabled)

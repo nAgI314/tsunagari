@@ -1,5 +1,5 @@
 import type { RefObject } from "react";
-import type { CandidateSlot, GoogleEvent, ScreenMode, ViewMode } from "../../model/types";
+import type { AnswerStatus, CandidateSlot, GoogleEvent, ScreenMode, ViewMode } from "../../model/types";
 import { MonthCalendar } from "./MonthCalendar";
 import { WeekCalendar } from "./WeekCalendar";
 
@@ -22,6 +22,8 @@ type Props = {
   onCandidateSlotClickById: (slotId: string) => void;
   onRemoveCandidateSlot: (slotId: string) => void;
   onMoveCandidateSlot: (slotId: string, day: Date, hour: number, minute: number) => void;
+  getSlotAnswer?: (slot: CandidateSlot) => AnswerStatus | undefined;
+  onSelectSlotAnswer?: (slotId: string, status: AnswerStatus) => void;
 };
 
 export function CalendarViewport({
@@ -43,6 +45,8 @@ export function CalendarViewport({
   onCandidateSlotClickById,
   onRemoveCandidateSlot,
   onMoveCandidateSlot,
+  getSlotAnswer,
+  onSelectSlotAnswer,
 }: Props) {
   if (viewMode === "week") {
     return (
@@ -56,11 +60,13 @@ export function CalendarViewport({
         slotByKey={slotByKey}
         googleEvents={googleEvents}
         onWeekCellClick={onWeekCellClick}
-        onCandidateSlotClickById={onCandidateSlotClickById}
-        onRemoveCandidateSlot={onRemoveCandidateSlot}
-        onMoveCandidateSlot={onMoveCandidateSlot}
-      />
-    );
+          onCandidateSlotClickById={onCandidateSlotClickById}
+          onRemoveCandidateSlot={onRemoveCandidateSlot}
+          onMoveCandidateSlot={onMoveCandidateSlot}
+          getSlotAnswer={getSlotAnswer}
+          onSelectSlotAnswer={onSelectSlotAnswer}
+        />
+      );
   }
 
   return (

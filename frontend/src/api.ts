@@ -11,6 +11,17 @@ export type CreateEventResponse = {
   event: ScheduleEvent;
 };
 
+export type GetEventResponse = {
+  event: ScheduleEvent;
+};
+
+export class EventNotFoundError extends Error {
+  constructor(message = "Event not found.") {
+    super(message);
+    this.name = "EventNotFoundError";
+  }
+}
+
 export type DevUser = {
   id: string;
   googleId: string;
@@ -33,6 +44,17 @@ export const createEvent = async (
   }
 
   return (await response.json()) as CreateEventResponse;
+};
+
+export const getEventByLinkId = async (linkId: string): Promise<GetEventResponse> => {
+  const response = await fetch(`/api/events/by-link/${encodeURIComponent(linkId)}`);
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new EventNotFoundError();
+    }
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as GetEventResponse;
 };
 
 const parseApiError = async (response: Response): Promise<string> => {

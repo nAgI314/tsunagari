@@ -1,23 +1,56 @@
-import type { CandidateSlot, ScreenMode } from "../../model/types";
+import type { ReactNode } from "react";
+import type { AnswerStatus, CandidateSlot, ScreenMode } from "../../model/types";
+import { AnswerChoiceButtons } from "../common/AnswerChoiceButtons";
 
 type Props = {
   candidateSlots: CandidateSlot[];
   screenMode: ScreenMode;
-  slotSummaryLabel: (slot: CandidateSlot) => string;
+  slotSummaryLabel: (slot: CandidateSlot) => ReactNode;
   onSlotClick: (slot: CandidateSlot) => void;
+  getSlotAnswer?: (slot: CandidateSlot) => AnswerStatus | undefined;
+  onSelectSlotAnswer?: (slotId: string, status: AnswerStatus) => void;
 };
 
-function slotStatusLabel(slot: CandidateSlot, screenMode: ScreenMode): string {
+function slotStatusLabel(
+  slot: CandidateSlot,
+  screenMode: ScreenMode,
+  getSlotAnswer?: (slot: CandidateSlot) => AnswerStatus | undefined,
+): string {
+  const answer = getSlotAnswer ? getSlotAnswer(slot) : slot.answer;
   if (screenMode !== "answer") {
     return "候補";
   }
-  if (slot.answer === "ng") {
+  if (answer === "ng") {
     return "NG";
   }
-  if (slot.answer === "maybe") {
+  if (answer === "maybe") {
     return "未定";
   }
-  return "OK";
+  if (answer === "ok") {
+    return "OK";
+  }
+  return "未回答";
+}
+
+function slotStatusClass(
+  slot: CandidateSlot,
+  screenMode: ScreenMode,
+  getSlotAnswer?: (slot: CandidateSlot) => AnswerStatus | undefined,
+): "ok" | "maybe" | "ng" | "pending" {
+  const answer = getSlotAnswer ? getSlotAnswer(slot) : slot.answer;
+  if (answer === "ng") {
+    return "ng";
+  }
+  if (answer === "maybe") {
+    return "maybe";
+  }
+  if (answer === "ok") {
+    return "ok";
+  }
+  if (screenMode === "answer") {
+    return "pending";
+  }
+  return "ok";
 }
 
 export function CandidateSlotPanel({
@@ -25,6 +58,8 @@ export function CandidateSlotPanel({
   screenMode,
   slotSummaryLabel,
   onSlotClick,
+  getSlotAnswer,
+  onSelectSlotAnswer,
 }: Props) {
   return (
     <section className="tsu-panel">
@@ -38,12 +73,19 @@ export function CandidateSlotPanel({
           .map((slot) => (
             <button
               key={slot.id}
-              className={`tsu-slot-item ${slot.answer ?? "ok"}`}
+              className={`tsu-slot-item ${slotStatusClass(slot, screenMode, getSlotAnswer)}`}
               onClick={() => onSlotClick(slot)}
               type="button"
             >
-              <span>{slotSummaryLabel(slot)}</span>
-              <strong>{slotStatusLabel(slot, screenMode)}</strong>
+              <span className="tsu-slot-label">{slotSummaryLabel(slot)}</span>
+              {screenMode === "answer" && onSelectSlotAnswer ? (
+                <AnswerChoiceButtons
+                  onSelect={(status) => onSelectSlotAnswer(slot.id, status)}
+                  value={getSlotAnswer ? getSlotAnswer(slot) : slot.answer}
+                />
+              ) : (
+                <strong>{slotStatusLabel(slot, screenMode, getSlotAnswer)}</strong>
+              )}
             </button>
           ))}
       </div>

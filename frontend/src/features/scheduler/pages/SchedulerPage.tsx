@@ -24,6 +24,8 @@ export function SchedulerPage() {
   const [creating, setCreating] = useState(false);
   const [createdLinkId, setCreatedLinkId] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const appDomain = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
 
   const {
     viewMode,
@@ -55,6 +57,14 @@ export function SchedulerPage() {
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
 
+  const issuedLink = useMemo(() => {
+    if (!createdLinkId) {
+      return null;
+    }
+    const base = appDomain && appDomain.length > 0 ? appDomain : window.location.origin;
+    return new URL(`/event/${createdLinkId}`, base).toString();
+  }, [appDomain, createdLinkId]);
+
   const onCreateSchedule = async () => {
     setCreateError(null);
     setCreatedLinkId(null);
@@ -73,6 +83,7 @@ export function SchedulerPage() {
 
     try {
       setCreating(true);
+      setCopied(false);
       const response = await createEvent({
         title: title.trim(),
         organizerName: organizerName.trim(),
@@ -91,6 +102,15 @@ export function SchedulerPage() {
     } finally {
       setCreating(false);
     }
+  };
+
+  const onCopyLink = async () => {
+    if (!issuedLink) {
+      return;
+    }
+    await navigator.clipboard.writeText(issuedLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
@@ -172,8 +192,15 @@ export function SchedulerPage() {
         <>
           <div className="tsu-create-result" role={createError ? "alert" : "status"}>
             {createError && <span className="error">{createError}</span>}
-            {!createError && createdLinkId && (
-              <span>{`作成しました: /event/${createdLinkId}`}</span>
+            {!createError && issuedLink && (
+              <div className="tsu-issued-link-row">
+                <a className="tsu-issued-link" href={issuedLink} rel="noreferrer" target="_blank">
+                  {issuedLink}
+                </a>
+                <Button onClick={() => void onCopyLink()} type="button" variant="outline">
+                  {copied ? "コピー済み" : "コピー"}
+                </Button>
+              </div>
             )}
           </div>
           <Button disabled={creating} onClick={() => void onCreateSchedule()} type="button">

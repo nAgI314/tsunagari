@@ -719,6 +719,22 @@ body {
   color: #d13b3b;
 }
 
+.tsu-issued-link-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tsu-issued-link {
+  color: var(--tsu-primary);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  max-width: 520px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 @media (max-width: 1100px) {
   .tsu-body {
     grid-template-columns: 1fr;

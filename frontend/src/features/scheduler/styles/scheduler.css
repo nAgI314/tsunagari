@@ -412,10 +412,6 @@ body {
   justify-content: flex-start;
 }
 
-.tsu-slot-answer-row .tsu-answer-choices {
-  padding-inline: 3px;
-}
-
 .tsu-slot-answer-row .tsu-answer-choice {
   height: 19px;
 }
@@ -535,7 +531,6 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 120ms ease;
-  padding: 3px;
   border: 1px solid var(--tsu-border);
   border-radius: 8px;
   background: var(--tsu-panel);

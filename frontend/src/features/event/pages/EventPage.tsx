@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { ScheduleEvent } from "../../../../../shared/src";
 import { AppShell } from "@/app/AppShell";
-import { EventNotFoundError, getEventByLinkId } from "@/api";
+import { EventNotFoundError, createEventResponseByLinkId, getEventByLinkId } from "@/api";
 import { Button } from "@/components/ui/button";
 import { CalendarViewport } from "@/features/scheduler/components/calendar/CalendarViewport";
 import { PeriodBar } from "@/features/scheduler/components/common/PeriodBar";
@@ -34,6 +34,7 @@ export function EventPage({ linkId }: EventPageProps) {
   const [answerByCandidateId, setAnswerByCandidateId] = useState<Map<string, AnswerStatus>>(new Map());
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   const {
     weekOffsets,
@@ -133,7 +134,7 @@ export function EventPage({ linkId }: EventPageProps) {
   const hasAnsweredAll = event ? event.candidates.every((candidate) => answerByCandidateId.has(candidate.id)) : false;
   const responseDeadlineLabel = "回答期限: 未設定";
 
-  const onSubmitResponse = () => {
+  const onSubmitResponse = async () => {
     setSubmitError(null);
     setSubmitMessage(null);
     if (!responderName.trim()) {
@@ -144,7 +145,23 @@ export function EventPage({ linkId }: EventPageProps) {
       setSubmitError("すべての候補に回答してください。");
       return;
     }
-    setSubmitMessage("回答内容を確認しました。送信API連携は次ステップで接続可能です。");
+
+    try {
+      setSubmitting(true);
+      await createEventResponseByLinkId(linkId, {
+        responderName: responderName.trim(),
+        comment: comment.trim() ? comment.trim() : undefined,
+        answers: event.candidates.map((candidate) => ({
+          candidateId: candidate.id,
+          status: answerByCandidateId.get(candidate.id) ?? "ok",
+        })),
+      });
+      setSubmitMessage("回答を送信しました。");
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "回答の送信に失敗しました。");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (status === "not-found") {
@@ -240,8 +257,14 @@ export function EventPage({ linkId }: EventPageProps) {
                 {submitError && <span className="error">{submitError}</span>}
                 {!submitError && submitMessage && <span>{submitMessage}</span>}
               </div>
-              <Button className="tsu-submit-primary" onClick={onSubmitResponse} type="button" variant="ghost">
-                回答を送信
+              <Button
+                className="tsu-submit-primary"
+                disabled={submitting}
+                onClick={() => void onSubmitResponse()}
+                type="button"
+                variant="ghost"
+              >
+                {submitting ? "送信中..." : "回答を送信"}
               </Button>
             </section>
           </aside>

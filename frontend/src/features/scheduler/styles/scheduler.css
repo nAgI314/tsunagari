@@ -897,6 +897,56 @@ body {
   line-height: 1.4;
 }
 
+.tsu-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tsu-results-item {
+  border: 1px solid var(--tsu-soft-border);
+  border-radius: 10px;
+  background: var(--tsu-panel);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tsu-results-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.tsu-results-head strong {
+  font-size: 13px;
+  color: var(--tsu-text);
+}
+
+.tsu-results-head span {
+  font-size: 11px;
+  color: var(--tsu-subtext);
+}
+
+.tsu-results-answers {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tsu-results-answers li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+
 .tsu-response-form {
   display: flex;
   flex-direction: column;

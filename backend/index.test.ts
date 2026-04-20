@@ -121,6 +121,59 @@ describe("backend api", () => {
     expect(res.body.error).toBe("Event not found.")
   })
 
+  test("POST /api/events/by-link/:linkId/responses creates response", async () => {
+    const app = createApp(createUserRepositoryMock())
+    const created = await request(app).post("/api/events").send({
+      title: "初回打ち合わせ",
+      organizerName: "Kenta",
+      candidates: [
+        { start: "2026-04-20T10:00:00.000Z", end: "2026-04-20T10:30:00.000Z" },
+        { start: "2026-04-20T11:00:00.000Z", end: "2026-04-20T11:30:00.000Z" },
+      ],
+    })
+    expect(created.status).toBe(201)
+
+    const response = await request(app)
+      .post(`/api/events/by-link/${created.body.event.linkId}/responses`)
+      .send({
+        responderName: "Hanako",
+        comment: "午後なら参加できます",
+        answers: created.body.event.candidates.map((candidate: { id: string }, idx: number) => ({
+          candidateId: candidate.id,
+          status: idx === 0 ? "maybe" : "ok",
+        })),
+      })
+
+    expect(response.status).toBe(201)
+    expect(response.body.response.responderName).toBe("Hanako")
+    expect(response.body.response.answers).toHaveLength(2)
+  })
+
+  test("GET /api/events/by-link/:linkId/responses lists responses", async () => {
+    const app = createApp(createUserRepositoryMock())
+    const created = await request(app).post("/api/events").send({
+      title: "初回打ち合わせ",
+      organizerName: "Kenta",
+      candidates: [
+        { start: "2026-04-20T10:00:00.000Z", end: "2026-04-20T10:30:00.000Z" },
+      ],
+    })
+    expect(created.status).toBe(201)
+
+    await request(app)
+      .post(`/api/events/by-link/${created.body.event.linkId}/responses`)
+      .send({
+        responderName: "Hanako",
+        answers: [{ candidateId: created.body.event.candidates[0].id, status: "ok" }],
+      })
+      .expect(201)
+
+    const listed = await request(app).get(`/api/events/by-link/${created.body.event.linkId}/responses`)
+    expect(listed.status).toBe(200)
+    expect(listed.body.responses).toHaveLength(1)
+    expect(listed.body.responses[0].responderName).toBe("Hanako")
+  })
+
   test("POST /api/dev/users creates user", async () => {
     const app = createApp(createUserRepositoryMock())
     const res = await request(app).post("/api/dev/users").send({

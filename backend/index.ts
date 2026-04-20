@@ -1,5 +1,5 @@
 import express from "express"
-import { type ScheduleEvent } from "../shared/src/index"
+import { type ScheduleEvent, type ScheduleResponse } from "../shared/src/index"
 import AppDataSource from "./src/data-source"
 import { type UserRepositoryLike } from "./src/routes/dev-users/common"
 import { registerDeleteDevUserRoute } from "./src/routes/dev-users/delete-user"
@@ -9,7 +9,9 @@ import { registerDevApiGuard } from "./src/routes/dev-users/guard-dev-api"
 import { registerPatchDevUserRoute } from "./src/routes/dev-users/patch-user"
 import { registerCreateDevUserRoute } from "./src/routes/dev-users/post-user"
 import { registerGetEventByLinkRoute } from "./src/routes/events/get-event-by-link"
+import { registerListEventResponsesRoute } from "./src/routes/events/get-event-responses"
 import { registerCreateEventRoute } from "./src/routes/events/post-event"
+import { registerCreateEventResponseRoute } from "./src/routes/events/post-event-response"
 import { registerUpdateEventRoute } from "./src/routes/events/put-event"
 
 export const createApp = (userRepository?: UserRepositoryLike) => {
@@ -18,6 +20,7 @@ export const createApp = (userRepository?: UserRepositoryLike) => {
   const isDevApiEnabled =
     process.env.NODE_ENV === "development" && process.env.DEV_API_ENABLED === "true"
   const inMemoryEvents = new Map<string, ScheduleEvent>()
+  const inMemoryResponses = new Map<string, ScheduleResponse[]>()
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" })
@@ -25,6 +28,8 @@ export const createApp = (userRepository?: UserRepositoryLike) => {
 
   registerCreateEventRoute(app, inMemoryEvents)
   registerGetEventByLinkRoute(app, inMemoryEvents)
+  registerListEventResponsesRoute(app, inMemoryEvents, inMemoryResponses)
+  registerCreateEventResponseRoute(app, inMemoryEvents, inMemoryResponses)
   registerUpdateEventRoute(app, inMemoryEvents)
 
   registerDevApiGuard(app, isDevApiEnabled)

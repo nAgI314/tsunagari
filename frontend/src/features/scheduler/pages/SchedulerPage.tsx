@@ -65,6 +65,13 @@ export function SchedulerPage() {
     return new URL(`/event/${createdLinkId}`, base).toString();
   }, [appDomain, createdLinkId]);
 
+  const issuedResultsLink = useMemo(() => {
+    if (!issuedLink) {
+      return null;
+    }
+    return `${issuedLink.replace(/\/+$/, "")}/results`;
+  }, [issuedLink]);
+
   const onCreateSchedule = async () => {
     setCreateError(null);
     setCreatedLinkId(null);
@@ -200,6 +207,13 @@ export function SchedulerPage() {
                 <Button onClick={() => void onCopyLink()} type="button" variant="outline">
                   {copied ? "コピー済み" : "コピー"}
                 </Button>
+              </div>
+            )}
+            {!createError && issuedResultsLink && (
+              <div className="tsu-issued-link-row">
+                <a className="tsu-issued-link" href={issuedResultsLink} rel="noreferrer" target="_blank">
+                  {issuedResultsLink}
+                </a>
               </div>
             )}
           </div>

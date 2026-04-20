@@ -1,4 +1,4 @@
-import type { ScheduleEvent } from "../../shared/src";
+import type { CreateScheduleResponseInput, ScheduleEvent, ScheduleResponse } from "../../shared/src";
 
 export type CreateEventRequest = {
   title: string;
@@ -13,6 +13,14 @@ export type CreateEventResponse = {
 
 export type GetEventResponse = {
   event: ScheduleEvent;
+};
+
+export type CreateEventResponsePayload = {
+  response: ScheduleResponse;
+};
+
+export type ListEventResponsesPayload = {
+  responses: ScheduleResponse[];
 };
 
 export class EventNotFoundError extends Error {
@@ -55,6 +63,35 @@ export const getEventByLinkId = async (linkId: string): Promise<GetEventResponse
     throw new Error(await parseApiError(response));
   }
   return (await response.json()) as GetEventResponse;
+};
+
+export const createEventResponseByLinkId = async (
+  linkId: string,
+  payload: CreateScheduleResponseInput,
+): Promise<CreateEventResponsePayload> => {
+  const response = await fetch(`/api/events/by-link/${encodeURIComponent(linkId)}/responses`, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new EventNotFoundError();
+    }
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as CreateEventResponsePayload;
+};
+
+export const listEventResponsesByLinkId = async (linkId: string): Promise<ListEventResponsesPayload> => {
+  const response = await fetch(`/api/events/by-link/${encodeURIComponent(linkId)}/responses`);
+  if (!response.ok) {
+    if (response.status === 404) {
+      throw new EventNotFoundError();
+    }
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as ListEventResponsesPayload;
 };
 
 const parseApiError = async (response: Response): Promise<string> => {

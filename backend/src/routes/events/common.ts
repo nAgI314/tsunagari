@@ -1,5 +1,12 @@
-import type { CreateEventInput, ScheduleCandidate, ScheduleEvent } from "../../../../shared/src/index"
+import type {
+  CreateEventInput,
+  CreateScheduleResponseInput,
+  ScheduleCandidate,
+  ScheduleEvent,
+  ScheduleResponse,
+} from "../../../../shared/src/index"
 import ScheduleAdjustment from "../../entities/ScheduleAdjustment"
+import ScheduleResponseEntity from "../../entities/ScheduleResponse"
 
 export const buildEvent = (input: CreateEventInput): ScheduleEvent => {
   const id = crypto.randomUUID()
@@ -35,3 +42,38 @@ export const toScheduleEvent = (adjustment: ScheduleAdjustment): ScheduleEvent =
     })),
   createdAt: adjustment.createdAt.toISOString(),
 })
+
+export const toScheduleResponse = (response: ScheduleResponseEntity): ScheduleResponse => ({
+  id: response.id,
+  scheduleId: response.adjustmentId,
+  responderName: response.responderName,
+  comment: response.comment ?? undefined,
+  answers: response.answers.map((answer) => ({
+    candidateId: answer.candidateId,
+    status: answer.status,
+  })),
+  createdAt: response.createdAt.toISOString(),
+})
+
+export const validateResponseAnswers = (
+  event: ScheduleEvent,
+  input: CreateScheduleResponseInput,
+): string | null => {
+  const candidateIds = new Set(event.candidates.map((candidate) => candidate.id))
+  if (candidateIds.size !== input.answers.length) {
+    return "answers must include all candidates exactly once."
+  }
+
+  const seen = new Set<string>()
+  for (const answer of input.answers) {
+    if (!candidateIds.has(answer.candidateId)) {
+      return "answers include a candidate not in this schedule."
+    }
+    if (seen.has(answer.candidateId)) {
+      return "answers must not include duplicate candidateId."
+    }
+    seen.add(answer.candidateId)
+  }
+
+  return null
+}

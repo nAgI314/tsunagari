@@ -593,6 +593,57 @@ body {
   resize: vertical;
 }
 
+.tsu-duration-picker {
+  position: relative;
+  margin-top: 4px;
+}
+
+.tsu-duration-trigger {
+  width: 100%;
+  border: 1px solid var(--tsu-border);
+  border-radius: 8px;
+  padding: 7px 8px;
+  font-size: 12px;
+  box-sizing: border-box;
+  color: var(--tsu-text);
+  background: var(--tsu-panel);
+  text-align: left;
+  cursor: pointer;
+}
+
+.tsu-duration-popover {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--tsu-border);
+  border-radius: 8px;
+  background: var(--tsu-panel);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.14);
+}
+
+.tsu-duration-option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  color: var(--tsu-text);
+  padding: 7px 8px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tsu-duration-option:hover {
+  background: var(--tsu-bg);
+}
+
+.tsu-duration-option.active {
+  background: rgba(24, 95, 165, 0.15);
+  font-weight: 600;
+}
+
 .tsu-slot-list {
   display: flex;
   flex-direction: column;

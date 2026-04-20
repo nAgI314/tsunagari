@@ -4,11 +4,30 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 type Props = {
+  title: string;
+  organizerName: string;
+  description: string;
+  responseDeadline: string;
   slotDurationMinutes: number;
+  onTitleChange: (value: string) => void;
+  onOrganizerNameChange: (value: string) => void;
+  onDescriptionChange: (value: string) => void;
+  onResponseDeadlineChange: (value: string) => void;
   onSlotDurationChange: (minutes: number) => void;
 };
 
-export function EventInfoPanel({ slotDurationMinutes, onSlotDurationChange }: Props) {
+export function EventInfoPanel({
+  title,
+  organizerName,
+  description,
+  responseDeadline,
+  slotDurationMinutes,
+  onTitleChange,
+  onOrganizerNameChange,
+  onDescriptionChange,
+  onResponseDeadlineChange,
+  onSlotDurationChange,
+}: Props) {
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement | null>(null);
   const durationOptions = useMemo(() => Array.from({ length: 72 }, (_, index) => (index + 1) * 5), []);
@@ -32,15 +51,25 @@ export function EventInfoPanel({ slotDurationMinutes, onSlotDurationChange }: Pr
       <h2>イベント情報</h2>
       <label>
         タイトル
-        <Input defaultValue="チームキックオフ" />
+        <Input onChange={(event) => onTitleChange(event.target.value)} value={title} />
+      </label>
+      <label>
+        主催者名
+        <Input
+          onChange={(event) => onOrganizerNameChange(event.target.value)}
+          value={organizerName}
+        />
       </label>
       <label>
         説明
-        <Textarea defaultValue="Googleカレンダーの予定と重ねて候補日を調整します。" />
+        <Textarea onChange={(event) => onDescriptionChange(event.target.value)} value={description} />
       </label>
       <label>
         回答期限
-        <Input defaultValue="2026-04-30" />
+        <Input
+          onChange={(event) => onResponseDeadlineChange(event.target.value)}
+          value={responseDeadline}
+        />
       </label>
       <label>
         候補の長さ

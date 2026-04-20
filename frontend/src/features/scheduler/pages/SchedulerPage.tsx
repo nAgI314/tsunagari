@@ -1,5 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { AppShell } from "@/app/AppShell";
+import { createEvent } from "@/api";
+import { Button } from "@/components/ui/button";
 import { CalendarViewport } from "../components/calendar/CalendarViewport";
 import { PeriodBar } from "../components/common/PeriodBar";
 import { CandidateSlotPanel } from "../components/sidebar/CandidateSlotPanel";
@@ -15,6 +17,14 @@ import "../styles/scheduler.css";
 
 export function SchedulerPage() {
   const now = useMemo(() => new Date(), []);
+  const [title, setTitle] = useState("チームキックオフ");
+  const [organizerName, setOrganizerName] = useState("あなた");
+  const [description, setDescription] = useState("Googleカレンダーの予定と重ねて候補日を調整します。");
+  const [responseDeadline, setResponseDeadline] = useState("2026-04-30");
+  const [creating, setCreating] = useState(false);
+  const [createdLinkId, setCreatedLinkId] = useState<string | null>(null);
+  const [createError, setCreateError] = useState<string | null>(null);
+
   const {
     viewMode,
     screenMode,
@@ -44,6 +54,44 @@ export function SchedulerPage() {
   } = useInfiniteWeekScroll(now);
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
+
+  const onCreateSchedule = async () => {
+    setCreateError(null);
+    setCreatedLinkId(null);
+    if (!title.trim()) {
+      setCreateError("タイトルを入力してください。");
+      return;
+    }
+    if (!organizerName.trim()) {
+      setCreateError("主催者名を入力してください。");
+      return;
+    }
+    if (candidateSlots.length === 0) {
+      setCreateError("候補日時を1件以上追加してください。");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const response = await createEvent({
+        title: title.trim(),
+        organizerName: organizerName.trim(),
+        description: description.trim() ? description.trim() : undefined,
+        candidates: candidateSlots
+          .slice()
+          .sort((a, b) => a.start.getTime() - b.start.getTime())
+          .map((slot) => ({
+            start: slot.start.toISOString(),
+            end: slot.end.toISOString(),
+          })),
+      });
+      setCreatedLinkId(response.event.linkId);
+    } catch (error) {
+      setCreateError(error instanceof Error ? error.message : "日程調整の作成に失敗しました。");
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <AppShell
@@ -99,7 +147,15 @@ export function SchedulerPage() {
 
           <aside className="tsu-side">
             <EventInfoPanel
+              title={title}
+              organizerName={organizerName}
+              description={description}
+              responseDeadline={responseDeadline}
               slotDurationMinutes={slotDurationMinutes}
+              onTitleChange={setTitle}
+              onOrganizerNameChange={setOrganizerName}
+              onDescriptionChange={setDescription}
+              onResponseDeadlineChange={setResponseDeadline}
               onSlotDurationChange={(minutes) => setSlotDurationMinutes(minutes)}
             />
             <CandidateSlotPanel
@@ -111,6 +167,19 @@ export function SchedulerPage() {
             <UsagePanel />
           </aside>
         </section>
+      }
+      footer={
+        <>
+          <div className="tsu-create-result" role={createError ? "alert" : "status"}>
+            {createError && <span className="error">{createError}</span>}
+            {!createError && createdLinkId && (
+              <span>{`作成しました: /event/${createdLinkId}`}</span>
+            )}
+          </div>
+          <Button disabled={creating} onClick={() => void onCreateSchedule()} type="button">
+            {creating ? "作成中..." : "日程調整リンクを作成"}
+          </Button>
+        </>
       }
     />
   );

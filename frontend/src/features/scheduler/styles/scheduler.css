@@ -860,6 +860,118 @@ body {
   gap: 8px;
 }
 
+.tsu-response-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tsu-response-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tsu-response-summary h2 {
+  margin: 0;
+  font-size: 15px;
+  color: var(--tsu-text);
+  font-weight: 700;
+  line-height: 1.3;
+  justify-content: flex-start;
+}
+
+.tsu-response-meta {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--tsu-subtext);
+}
+
+.tsu-response-description {
+  margin: 0;
+  font-size: 11px;
+  color: var(--tsu-subtext);
+  line-height: 1.4;
+}
+
+.tsu-response-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tsu-response-submit-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: auto;
+  border-top: 1px solid var(--tsu-soft-border);
+  background: var(--tsu-bg);
+}
+
+.tsu-body-response {
+  height: 86vh;
+  min-height: 700px;
+}
+
+.tsu-side-response {
+  height: 100%;
+  min-height: 0;
+}
+
+.tsu-candidate-scroll-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tsu-candidate-scroll-panel .tsu-slot-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--tsu-border) transparent;
+}
+
+.tsu-candidate-scroll-panel .tsu-slot-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tsu-candidate-scroll-panel .tsu-slot-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tsu-candidate-scroll-panel .tsu-slot-list::-webkit-scrollbar-thumb {
+  background: var(--tsu-border);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+.tsu-candidate-scroll-panel .tsu-slot-list::-webkit-scrollbar-thumb:hover {
+  background: var(--tsu-subtext);
+  background-clip: padding-box;
+}
+
+.tsu-submit-primary {
+  border: none;
+  border-radius: 9px;
+  padding: 9px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, var(--tsu-primary), var(--tsu-primary-strong));
+}
+
+.tsu-submit-primary:hover {
+  filter: brightness(1.03);
+}
+
 .tsu-footer button {
   border: none;
   border-radius: 9px;

@@ -11,7 +11,7 @@ export function AppShell({ topbar, body, footer }: Props) {
     <main className="tsu-root">
       {topbar}
       {body}
-      <footer className="tsu-footer">{footer}</footer>
+      {footer ? <footer className="tsu-footer">{footer}</footer> : null}
     </main>
   );
 }

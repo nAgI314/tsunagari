@@ -9,6 +9,7 @@ type Props = {
   onSlotClick: (slot: CandidateSlot) => void;
   getSlotAnswer?: (slot: CandidateSlot) => AnswerStatus | undefined;
   onSelectSlotAnswer?: (slotId: string, status: AnswerStatus) => void;
+  className?: string;
 };
 
 function slotStatusLabel(
@@ -60,9 +61,10 @@ export function CandidateSlotPanel({
   onSlotClick,
   getSlotAnswer,
   onSelectSlotAnswer,
+  className,
 }: Props) {
   return (
-    <section className="tsu-panel">
+    <section className={`tsu-panel ${className ?? ""}`}>
       <h2>
         候補日時 <small>{candidateSlots.length}件</small>
       </h2>

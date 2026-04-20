@@ -131,6 +131,7 @@ export function EventPage({ linkId }: EventPageProps) {
   };
 
   const hasAnsweredAll = event ? event.candidates.every((candidate) => answerByCandidateId.has(candidate.id)) : false;
+  const responseDeadlineLabel = "回答期限: 未設定";
 
   const onSubmitResponse = () => {
     setSubmitError(null);
@@ -178,7 +179,7 @@ export function EventPage({ linkId }: EventPageProps) {
         />
       }
       body={
-        <section className="tsu-body">
+        <section className="tsu-body tsu-body-response">
           <div className="tsu-calendar-area">
             <PeriodBar
               hint={
@@ -214,37 +215,37 @@ export function EventPage({ linkId }: EventPageProps) {
               />
             </div>
           </div>
-          <aside className="tsu-side">
+          <aside className="tsu-side tsu-side-response">
             <ResponseInfoPanel
               comment={comment}
               description={event.description}
               onCommentChange={setComment}
               onResponderNameChange={setResponderName}
               organizerName={event.organizerName}
+              responseDeadlineLabel={responseDeadlineLabel}
               responderName={responderName}
               title={event.title}
             />
             <CandidateSlotPanel
               candidateSlots={candidateSlots}
+              className="tsu-candidate-scroll-panel"
               getSlotAnswer={(slot) => answerByCandidateId.get(slot.id)}
               onSelectSlotAnswer={setAnswer}
               onSlotClick={(slot) => onCycleAnswer(slot.id)}
               screenMode="answer"
               slotSummaryLabel={slotSummaryLabel}
             />
+            <section className="tsu-panel tsu-response-submit-panel">
+              <div className="tsu-create-result" role={submitError ? "alert" : "status"}>
+                {submitError && <span className="error">{submitError}</span>}
+                {!submitError && submitMessage && <span>{submitMessage}</span>}
+              </div>
+              <Button className="tsu-submit-primary" onClick={onSubmitResponse} type="button" variant="ghost">
+                回答を送信
+              </Button>
+            </section>
           </aside>
         </section>
-      }
-      footer={
-        <>
-          <div className="tsu-create-result" role={submitError ? "alert" : "status"}>
-            {submitError && <span className="error">{submitError}</span>}
-            {!submitError && submitMessage && <span>{submitMessage}</span>}
-          </div>
-          <Button onClick={onSubmitResponse} type="button">
-            回答を送信
-          </Button>
-        </>
       }
     />
   );

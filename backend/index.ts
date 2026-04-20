@@ -30,7 +30,11 @@ const buildEvent = (input: CreateEventInput): ScheduleEvent => {
     title: input.title,
     organizerName: input.organizerName,
     description: input.description,
-    candidates: input.candidates,
+    candidates: input.candidates.map((slot) => ({
+      id: crypto.randomUUID(),
+      start: slot.start,
+      end: slot.end,
+    })),
     createdAt: new Date().toISOString(),
   }
 }

@@ -34,7 +34,11 @@ export class ScheduleAdjustment extends BaseEntity {
   @UpdateDateColumn({ type: "timestamptz" })
   updatedAt!: Date
 
-  @OneToMany(() => ScheduleCandidate, (candidate) => candidate.adjustment)
+  @OneToMany(() => ScheduleCandidate, (candidate) => candidate.adjustment, {
+    cascade: true,
+    eager: true,
+    orphanedRowAction: "delete",
+  })
   candidates!: Relation<ScheduleCandidate[]>
 
   @OneToMany(() => ScheduleResponse, (response) => response.adjustment)

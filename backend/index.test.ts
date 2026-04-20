@@ -69,6 +69,34 @@ describe("backend api", () => {
     expect(res.body.event.linkId.length).toBe(12)
   })
 
+  test("PUT /api/events/:id updates event", async () => {
+    const app = createApp(createUserRepositoryMock())
+    const created = await request(app).post("/api/events").send({
+      title: "初回打ち合わせ",
+      organizerName: "Kenta",
+      candidates: [
+        { start: "2026-04-20T10:00:00.000Z", end: "2026-04-20T10:30:00.000Z" },
+      ],
+    })
+    expect(created.status).toBe(201)
+
+    const updated = await request(app)
+      .put(`/api/events/${created.body.event.id}`)
+      .send({
+        title: "更新後MTG",
+        organizerName: "Hanako",
+        candidates: [
+          { start: "2026-04-21T11:00:00.000Z", end: "2026-04-21T11:30:00.000Z" },
+        ],
+      })
+
+    expect(updated.status).toBe(200)
+    expect(updated.body.event.id).toBe(created.body.event.id)
+    expect(updated.body.event.title).toBe("更新後MTG")
+    expect(updated.body.event.organizerName).toBe("Hanako")
+    expect(updated.body.event.candidates).toHaveLength(1)
+  })
+
   test("POST /api/dev/users creates user", async () => {
     const app = createApp(createUserRepositoryMock())
     const res = await request(app).post("/api/dev/users").send({

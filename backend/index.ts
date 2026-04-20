@@ -1,11 +1,9 @@
 import express from "express"
-import {
-  type CreateEventInput,
-  type ScheduleEvent,
-  validateCreateEventInput,
-} from "../shared/src/index"
+import { type ScheduleEvent } from "../shared/src/index"
 import AppDataSource from "./src/data-source"
 import User from "./src/entities/User"
+import { registerCreateEventRoute } from "./src/routes/events/post-event"
+import { registerUpdateEventRoute } from "./src/routes/events/put-event"
 
 type UserPayload = {
   googleId: string
@@ -19,24 +17,6 @@ type UserRepositoryLike = {
   findOneBy: (where: { id: string }) => Promise<User | null>
   find: () => Promise<User[]>
   remove: (user: User) => Promise<User>
-}
-
-const buildEvent = (input: CreateEventInput): ScheduleEvent => {
-  const id = crypto.randomUUID()
-  const linkId = crypto.randomUUID().replaceAll("-", "").slice(0, 12)
-  return {
-    id,
-    linkId,
-    title: input.title,
-    organizerName: input.organizerName,
-    description: input.description,
-    candidates: input.candidates.map((slot) => ({
-      id: crypto.randomUUID(),
-      start: slot.start,
-      end: slot.end,
-    })),
-    createdAt: new Date().toISOString(),
-  }
 }
 
 const validateUserPayload = (value: unknown) => {
@@ -111,21 +91,14 @@ export const createApp = (userRepository?: UserRepositoryLike) => {
   app.use(express.json())
   const isDevApiEnabled =
     process.env.NODE_ENV === "development" && process.env.DEV_API_ENABLED === "true"
+  const inMemoryEvents = new Map<string, ScheduleEvent>()
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" })
   })
 
-  app.post("/api/events", (req, res) => {
-    const parsed = validateCreateEventInput(req.body)
-    if (!parsed.ok) {
-      res.status(400).json({ error: parsed.message })
-      return
-    }
-
-    const event = buildEvent(parsed.value)
-    res.status(201).json({ event })
-  })
+  registerCreateEventRoute(app, inMemoryEvents)
+  registerUpdateEventRoute(app, inMemoryEvents)
 
   app.use("/api/dev", (_req, res, next) => {
     if (!isDevApiEnabled) {

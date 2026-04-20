@@ -3,6 +3,10 @@ import "reflect-metadata"
 import { join, dirname } from "node:path"
 import { fileURLToPath } from "node:url"
 import { DataSource } from "typeorm"
+import ScheduleAdjustment from "./entities/ScheduleAdjustment"
+import ScheduleCandidate from "./entities/ScheduleCandidate"
+import ScheduleResponse from "./entities/ScheduleResponse"
+import ScheduleResponseAnswer from "./entities/ScheduleResponseAnswer"
 import User from "./entities/User"
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
@@ -18,7 +22,7 @@ const AppDataSource = new DataSource({
   synchronize: false,
   migrationsRun: false,
   logging: false,
-  entities: [User],
+  entities: [User, ScheduleAdjustment, ScheduleCandidate, ScheduleResponse, ScheduleResponseAnswer],
   migrations: [migrationGlob],
   subscribers: [],
 })

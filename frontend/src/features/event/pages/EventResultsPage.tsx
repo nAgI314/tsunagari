@@ -10,10 +10,24 @@ type Props = {
 
 type FetchStatus = "loading" | "ready" | "not-found" | "error";
 
-const STATUS_LABEL: Record<string, string> = {
+type SlotStatus = "ok" | "maybe" | "ng" | "unanswered";
+
+type CandidateAggregate = {
+  candidateId: string;
+  start: Date;
+  end: Date;
+  ok: number;
+  maybe: number;
+  ng: number;
+  unanswered: number;
+  statusByResponder: Map<string, SlotStatus>;
+};
+
+const STATUS_LABEL: Record<SlotStatus, string> = {
   ok: "○",
   maybe: "△",
   ng: "×",
+  unanswered: "未回答",
 };
 
 export function EventResultsPage({ linkId }: Props) {
@@ -21,6 +35,8 @@ export function EventResultsPage({ linkId }: Props) {
   const [event, setEvent] = useState<ScheduleEvent | null>(null);
   const [responses, setResponses] = useState<ScheduleResponse[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [requiredResponders, setRequiredResponders] = useState<string[]>([]);
+  const [requiredRule, setRequiredRule] = useState<"ok-only" | "ok-or-maybe">("ok-only");
 
   useEffect(() => {
     let active = true;
@@ -56,23 +72,119 @@ export function EventResultsPage({ linkId }: Props) {
     };
   }, [linkId]);
 
-  const candidateLabelById = useMemo(() => {
-    if (!event) {
-      return new Map<string, string>();
+  const responders = useMemo(() => {
+    const seen = new Set<string>();
+    const names: string[] = [];
+    for (const response of responses) {
+      if (!seen.has(response.responderName)) {
+        seen.add(response.responderName);
+        names.push(response.responderName);
+      }
     }
-    return new Map(
-      event.candidates.map((candidate) => {
-        const start = new Date(candidate.start);
-        const end = new Date(candidate.end);
-        const day = `${start.getMonth() + 1}/${start.getDate()}`;
-        return [candidate.id, `${day} ${timeLabel(start)} - ${timeLabel(end)}`];
+    return names;
+  }, [responses]);
+
+  const aggregateCandidates = useMemo<CandidateAggregate[]>(() => {
+    if (!event) {
+      return [];
+    }
+
+    return event.candidates.map((candidate) => {
+      const start = new Date(candidate.start);
+      const end = new Date(candidate.end);
+      const statusByResponder = new Map<string, SlotStatus>(
+        responders.map((name) => [name, "unanswered"] as const),
+      );
+
+      let ok = 0;
+      let maybe = 0;
+      let ng = 0;
+      let unanswered = responders.length;
+
+      for (const response of responses) {
+        const answer = response.answers.find((item) => item.candidateId === candidate.id);
+        if (!answer) {
+          continue;
+        }
+        statusByResponder.set(response.responderName, answer.status);
+        unanswered -= 1;
+        if (answer.status === "ok") {
+          ok += 1;
+        } else if (answer.status === "maybe") {
+          maybe += 1;
+        } else if (answer.status === "ng") {
+          ng += 1;
+        }
+      }
+
+      return {
+        candidateId: candidate.id,
+        start,
+        end,
+        ok,
+        maybe,
+        ng,
+        unanswered: Math.max(0, unanswered),
+        statusByResponder,
+      };
+    });
+  }, [event, responses, responders]);
+
+  const sortedCandidates = useMemo(() => {
+    return aggregateCandidates.slice().sort((a, b) => {
+      if (a.ok !== b.ok) {
+        return b.ok - a.ok;
+      }
+      if (a.maybe !== b.maybe) {
+        return b.maybe - a.maybe;
+      }
+      if (a.ng !== b.ng) {
+        return a.ng - b.ng;
+      }
+      if (a.unanswered !== b.unanswered) {
+        return a.unanswered - b.unanswered;
+      }
+      return a.start.getTime() - b.start.getTime();
+    });
+  }, [aggregateCandidates]);
+
+  const filteredCandidates = useMemo(() => {
+    if (requiredResponders.length === 0) {
+      return sortedCandidates;
+    }
+
+    return sortedCandidates.filter((candidate) =>
+      requiredResponders.every((name) => {
+        const slotStatus = candidate.statusByResponder.get(name);
+        if (requiredRule === "ok-or-maybe") {
+          return slotStatus === "ok" || slotStatus === "maybe";
+        }
+        return slotStatus === "ok";
       }),
     );
-  }, [event]);
+  }, [requiredResponders, requiredRule, sortedCandidates]);
+
+  const totalResponders = responders.length;
+
+  const toggleRequiredResponder = (name: string) => {
+    setRequiredResponders((prev) =>
+      prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name],
+    );
+  };
+
+  const formatCandidateLabel = (start: Date, end: Date) => {
+    const day = start.toLocaleDateString("ja-JP", {
+      month: "numeric",
+      day: "numeric",
+      weekday: "short",
+    });
+    return `${day} ${timeLabel(start)}〜${timeLabel(end)}`;
+  };
 
   if (status === "not-found") {
     return <NotFoundPage />;
   }
+
   if (status === "loading") {
     return (
       <main className="min-h-[70svh] flex items-center justify-center px-6 text-sm text-muted-foreground">
@@ -80,6 +192,7 @@ export function EventResultsPage({ linkId }: Props) {
       </main>
     );
   }
+
   if (status === "error" || !event) {
     return (
       <main className="min-h-[70svh] flex flex-col items-center justify-center gap-3 px-6 text-center">
@@ -103,29 +216,104 @@ export function EventResultsPage({ linkId }: Props) {
 
       <section className="tsu-panel">
         <h2>
-          回答一覧 <small>{responses.length}件</small>
+          候補日程ランキング <small>{filteredCandidates.length}件</small>
         </h2>
+
+        <div className="tsu-results-filters">
+          <div className="tsu-results-filter-row">
+            <strong>必須参加者</strong>
+            <div className="tsu-results-chip-row">
+              {responders.length === 0 && <span className="tsu-response-description">回答がまだありません。</span>}
+              {responders.map((name) => (
+                <button
+                  className={`tsu-filter-chip ${requiredResponders.includes(name) ? "active" : ""}`}
+                  key={name}
+                  onClick={() => toggleRequiredResponder(name)}
+                  type="button"
+                >
+                  {name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="tsu-results-filter-row">
+            <strong>必須条件</strong>
+            <div className="tsu-results-chip-row">
+              <button
+                className={`tsu-filter-chip ${requiredRule === "ok-only" ? "active" : ""}`}
+                onClick={() => setRequiredRule("ok-only")}
+                type="button"
+              >
+                ○のみ
+              </button>
+              <button
+                className={`tsu-filter-chip ${requiredRule === "ok-or-maybe" ? "active" : ""}`}
+                onClick={() => setRequiredRule("ok-or-maybe")}
+                type="button"
+              >
+                ○または△
+              </button>
+            </div>
+          </div>
+        </div>
+
         {responses.length === 0 ? (
           <p className="tsu-response-description">まだ回答はありません。</p>
+        ) : filteredCandidates.length === 0 ? (
+          <p className="tsu-response-description">指定した必須条件を満たす候補はありません。</p>
         ) : (
           <div className="tsu-results-list">
-            {responses.map((response) => (
-              <article className="tsu-results-item" key={response.id}>
-                <header className="tsu-results-head">
-                  <strong>{response.responderName}</strong>
-                  <span>{new Date(response.createdAt).toLocaleString()}</span>
-                </header>
-                {response.comment && <p className="tsu-response-description">{response.comment}</p>}
-                <ul className="tsu-results-answers">
-                  {response.answers.map((answer) => (
-                    <li key={`${response.id}-${answer.candidateId}`}>
-                      <span>{candidateLabelById.get(answer.candidateId) ?? answer.candidateId}</span>
-                      <strong>{STATUS_LABEL[answer.status] ?? "-"}</strong>
-                    </li>
-                  ))}
-                </ul>
-              </article>
-            ))}
+            {filteredCandidates.map((candidate, index) => {
+              const total = Math.max(1, totalResponders);
+              const okRate = (candidate.ok / total) * 100;
+              const maybeRate = (candidate.maybe / total) * 100;
+              const ngRate = (candidate.ng / total) * 100;
+              const unansweredRate = (candidate.unanswered / total) * 100;
+
+              return (
+                <article className="tsu-results-item tsu-candidate-card" key={candidate.candidateId}>
+                  <header className="tsu-results-head">
+                    <div className="tsu-results-title-wrap">
+                      <strong>{formatCandidateLabel(candidate.start, candidate.end)}</strong>
+                      {index === 0 && <span className="tsu-rank-badge">最有力</span>}
+                    </div>
+                    <span>
+                      {STATUS_LABEL.ok}
+                      {candidate.ok} {STATUS_LABEL.maybe}
+                      {candidate.maybe} {STATUS_LABEL.ng}
+                      {candidate.ng} {STATUS_LABEL.unanswered}
+                      {candidate.unanswered}
+                    </span>
+                  </header>
+
+                  <div aria-label="回答の割合" className="tsu-candidate-meter" role="img">
+                    <span className="ok" style={{ width: `${okRate}%` }} />
+                    <span className="maybe" style={{ width: `${maybeRate}%` }} />
+                    <span className="ng" style={{ width: `${ngRate}%` }} />
+                    <span className="unanswered" style={{ width: `${unansweredRate}%` }} />
+                  </div>
+
+                  <div className="tsu-attendee-chip-list">
+                    {responders.map((name) => {
+                      const slotStatus = candidate.statusByResponder.get(name) ?? "unanswered";
+                      return (
+                        <span className={`tsu-attendee-chip ${slotStatus}`} key={`${candidate.candidateId}-${name}`}>
+                          {STATUS_LABEL[slotStatus]} {name}
+                        </span>
+                      );
+                    })}
+                  </div>
+
+                  <div className="tsu-card-foot">
+                    <span className="ok">■ {candidate.ok} 参加できる</span>
+                    <span className="maybe">■ {candidate.maybe} 調整できるかも</span>
+                    <span className="ng">■ {candidate.ng} 参加できない</span>
+                    <span className="unanswered">■ {candidate.unanswered} 未回答</span>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>

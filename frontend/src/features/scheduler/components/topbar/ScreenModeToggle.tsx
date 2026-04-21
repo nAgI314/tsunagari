@@ -15,13 +15,13 @@ export function ScreenModeToggle({ value, onChange }: Props) {
       >
         作成
       </button>
-      <button
+      {/* <button
         className={value === "answer" ? "active" : ""}
         onClick={() => onChange("answer")}
         type="button"
       >
         回答
-      </button>
+      </button> */}
     </div>
   );
 }

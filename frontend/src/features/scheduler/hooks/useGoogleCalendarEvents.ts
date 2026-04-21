@@ -12,6 +12,16 @@ type CalendarEventsResponse = {
   items?: CalendarEventItem[];
 };
 
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+const parseGoogleDate = (value: string): Date => {
+  if (DATE_ONLY_PATTERN.test(value)) {
+    const [year, month, day] = value.split("-").map((part) => Number(part));
+    return new Date(year, month - 1, day, 0, 0, 0, 0);
+  }
+  return new Date(value);
+};
+
 export function useGoogleCalendarEvents(accessToken: string | null, enabled: boolean) {
   const [events, setEvents] = useState<GoogleEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -28,8 +38,8 @@ export function useGoogleCalendarEvents(accessToken: string | null, enabled: boo
       try {
         setError(null);
         const now = new Date();
-        const timeMin = now.toISOString();
-        const timeMax = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 35).toISOString();
+        const timeMin = new Date(now.getTime() - 1000 * 60 * 60 * 24 * 30).toISOString();
+        const timeMax = new Date(now.getTime() + 1000 * 60 * 60 * 24 * 120).toISOString();
         const params = new URLSearchParams({
           timeMin,
           timeMax,
@@ -55,8 +65,8 @@ export function useGoogleCalendarEvents(accessToken: string | null, enabled: boo
             if (!item.id || !startRaw || !endRaw) {
               return null;
             }
-            const start = new Date(startRaw);
-            const end = new Date(endRaw);
+            const start = parseGoogleDate(startRaw);
+            const end = parseGoogleDate(endRaw);
             if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
               return null;
             }

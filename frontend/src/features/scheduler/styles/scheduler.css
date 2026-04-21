@@ -1092,6 +1092,20 @@ body {
   font-size: 12px;
 }
 
+.tsu-card-foot span,
+.tsu-results-summary-inline span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tsu-results-summary-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+}
+
 .tsu-card-foot .ok {
   color: #2a815c;
 }
@@ -1128,9 +1142,63 @@ body {
   min-height: 700px;
 }
 
+.tsu-body-results {
+  height: 86vh;
+  min-height: 700px;
+}
+
 .tsu-side-response {
   height: 100%;
   min-height: 0;
+}
+
+.tsu-results-side {
+  height: 100%;
+  min-height: 0;
+}
+
+.tsu-results-main-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.tsu-results-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.tsu-results-info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tsu-results-info-panel h2 {
+  margin: 0;
+  justify-content: flex-start;
+  font-size: 15px;
+  color: var(--tsu-text);
+}
+
+.tsu-results-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tsu-results-info-list p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--tsu-subtext);
+  line-height: 1.4;
+}
+
+.tsu-results-info-list strong {
+  color: var(--tsu-text);
 }
 
 .tsu-candidate-scroll-panel {

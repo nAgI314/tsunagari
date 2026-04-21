@@ -3,6 +3,7 @@ import type { ScheduleEvent, ScheduleResponse } from "../../../../../shared/src"
 import { EventNotFoundError, getEventByLinkId, listEventResponsesByLinkId } from "@/api";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { timeLabel } from "@/features/scheduler/utils/date";
+import { Circle, Triangle, X } from "lucide-react";
 
 type Props = {
   linkId: string;
@@ -29,6 +30,8 @@ const STATUS_LABEL: Record<SlotStatus, string> = {
   ng: "×",
   unanswered: "未回答",
 };
+
+const appDomain = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
 
 export function EventResultsPage({ linkId }: Props) {
   const [status, setStatus] = useState<FetchStatus>("loading");
@@ -165,6 +168,11 @@ export function EventResultsPage({ linkId }: Props) {
   }, [requiredResponders, requiredRule, sortedCandidates]);
 
   const totalResponders = responders.length;
+  const eventUrl = useMemo(() => {
+    const base = appDomain && appDomain.length > 0 ? appDomain : window.location.origin;
+    return new URL(`/event/${linkId}`, base).toString();
+  }, [linkId]);
+  const resultUrl = `${eventUrl.replace(/\/+$/, "")}/results`;
 
   const toggleRequiredResponder = (name: string) => {
     setRequiredResponders((prev) =>
@@ -214,108 +222,150 @@ export function EventResultsPage({ linkId }: Props) {
         </a>
       </section>
 
-      <section className="tsu-panel">
-        <h2>
-          候補日程ランキング <small>{filteredCandidates.length}件</small>
-        </h2>
+      <section className="tsu-body tsu-body-results">
+        <div className="tsu-calendar-area">
+          <section className="tsu-panel tsu-results-main-panel">
+            <h2>
+              候補日程ランキング <small>{filteredCandidates.length}件</small>
+            </h2>
 
-        <div className="tsu-results-filters">
-          <div className="tsu-results-filter-row">
-            <strong>必須参加者</strong>
-            <div className="tsu-results-chip-row">
-              {responders.length === 0 && <span className="tsu-response-description">回答がまだありません。</span>}
-              {responders.map((name) => (
-                <button
-                  className={`tsu-filter-chip ${requiredResponders.includes(name) ? "active" : ""}`}
-                  key={name}
-                  onClick={() => toggleRequiredResponder(name)}
-                  type="button"
-                >
-                  {name}
-                </button>
-              ))}
-            </div>
-          </div>
+            <div className="tsu-results-filters">
+              <div className="tsu-results-filter-row">
+                <strong>必須参加者</strong>
+                <div className="tsu-results-chip-row">
+                  {responders.length === 0 && <span className="tsu-response-description">回答がまだありません。</span>}
+                  {responders.map((name) => (
+                    <button
+                      className={`tsu-filter-chip ${requiredResponders.includes(name) ? "active" : ""}`}
+                      key={name}
+                      onClick={() => toggleRequiredResponder(name)}
+                      type="button"
+                    >
+                      {name}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-          <div className="tsu-results-filter-row">
-            <strong>必須条件</strong>
-            <div className="tsu-results-chip-row">
-              <button
-                className={`tsu-filter-chip ${requiredRule === "ok-only" ? "active" : ""}`}
-                onClick={() => setRequiredRule("ok-only")}
-                type="button"
-              >
-                ○のみ
-              </button>
-              <button
-                className={`tsu-filter-chip ${requiredRule === "ok-or-maybe" ? "active" : ""}`}
-                onClick={() => setRequiredRule("ok-or-maybe")}
-                type="button"
-              >
-                ○または△
-              </button>
+              <div className="tsu-results-filter-row">
+                <strong>必須条件</strong>
+                <div className="tsu-results-chip-row">
+                  <button
+                    className={`tsu-filter-chip ${requiredRule === "ok-only" ? "active" : ""}`}
+                    onClick={() => setRequiredRule("ok-only")}
+                    type="button"
+                  >
+                    ○のみ
+                  </button>
+                  <button
+                    className={`tsu-filter-chip ${requiredRule === "ok-or-maybe" ? "active" : ""}`}
+                    onClick={() => setRequiredRule("ok-or-maybe")}
+                    type="button"
+                  >
+                    ○または△
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
+
+            {responses.length === 0 ? (
+              <p className="tsu-response-description">まだ回答はありません。</p>
+            ) : filteredCandidates.length === 0 ? (
+              <p className="tsu-response-description">指定した必須条件を満たす候補はありません。</p>
+            ) : (
+              <div className="tsu-results-list tsu-results-scroll">
+                {filteredCandidates.map((candidate, index) => {
+                  const total = Math.max(1, totalResponders);
+                  const okRate = (candidate.ok / total) * 100;
+                  const maybeRate = (candidate.maybe / total) * 100;
+                  const ngRate = (candidate.ng / total) * 100;
+                  const unansweredRate = (candidate.unanswered / total) * 100;
+
+                  return (
+                    <article className="tsu-results-item tsu-candidate-card" key={candidate.candidateId}>
+                      <header className="tsu-results-head">
+                        <div className="tsu-results-title-wrap">
+                          <strong>{formatCandidateLabel(candidate.start, candidate.end)}</strong>
+                          {index === 0 && <span className="tsu-rank-badge">最有力</span>}
+                        </div>
+                        <span className="tsu-results-summary-inline">
+                          <span className="ok">
+                            <Circle className="h-[11px] w-[11px]" /> {candidate.ok}
+                          </span>
+                          <span className="maybe">
+                            <Triangle className="h-[10px] w-[10px]" /> {candidate.maybe}
+                          </span>
+                          <span className="ng">
+                            <X className="h-[11px] w-[11px]" /> {candidate.ng}
+                          </span>
+                          <span className="unanswered">未回答 {candidate.unanswered}</span>
+                        </span>
+                      </header>
+
+                      <div aria-label="回答の割合" className="tsu-candidate-meter" role="img">
+                        <span className="ok" style={{ width: `${okRate}%` }} />
+                        <span className="maybe" style={{ width: `${maybeRate}%` }} />
+                        <span className="ng" style={{ width: `${ngRate}%` }} />
+                        <span className="unanswered" style={{ width: `${unansweredRate}%` }} />
+                      </div>
+
+                      <div className="tsu-attendee-chip-list">
+                        {responders.map((name) => {
+                          const slotStatus = candidate.statusByResponder.get(name) ?? "unanswered";
+                          return (
+                            <span className={`tsu-attendee-chip ${slotStatus}`} key={`${candidate.candidateId}-${name}`}>
+                              {STATUS_LABEL[slotStatus]} {name}
+                            </span>
+                          );
+                        })}
+                      </div>
+
+                      <div className="tsu-card-foot">
+                        <span className="ok">
+                          <Circle className="h-[11px] w-[11px]" /> {candidate.ok}
+                        </span>
+                        <span className="maybe">
+                          <Triangle className="h-[10px] w-[10px]" /> {candidate.maybe}
+                        </span>
+                        <span className="ng">
+                          <X className="h-[11px] w-[11px]" /> {candidate.ng}
+                        </span>
+                        <span className="unanswered">{candidate.unanswered} 未回答</span>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+          </section>
         </div>
 
-        {responses.length === 0 ? (
-          <p className="tsu-response-description">まだ回答はありません。</p>
-        ) : filteredCandidates.length === 0 ? (
-          <p className="tsu-response-description">指定した必須条件を満たす候補はありません。</p>
-        ) : (
-          <div className="tsu-results-list">
-            {filteredCandidates.map((candidate, index) => {
-              const total = Math.max(1, totalResponders);
-              const okRate = (candidate.ok / total) * 100;
-              const maybeRate = (candidate.maybe / total) * 100;
-              const ngRate = (candidate.ng / total) * 100;
-              const unansweredRate = (candidate.unanswered / total) * 100;
-
-              return (
-                <article className="tsu-results-item tsu-candidate-card" key={candidate.candidateId}>
-                  <header className="tsu-results-head">
-                    <div className="tsu-results-title-wrap">
-                      <strong>{formatCandidateLabel(candidate.start, candidate.end)}</strong>
-                      {index === 0 && <span className="tsu-rank-badge">最有力</span>}
-                    </div>
-                    <span>
-                      {STATUS_LABEL.ok}
-                      {candidate.ok} {STATUS_LABEL.maybe}
-                      {candidate.maybe} {STATUS_LABEL.ng}
-                      {candidate.ng} {STATUS_LABEL.unanswered}
-                      {candidate.unanswered}
-                    </span>
-                  </header>
-
-                  <div aria-label="回答の割合" className="tsu-candidate-meter" role="img">
-                    <span className="ok" style={{ width: `${okRate}%` }} />
-                    <span className="maybe" style={{ width: `${maybeRate}%` }} />
-                    <span className="ng" style={{ width: `${ngRate}%` }} />
-                    <span className="unanswered" style={{ width: `${unansweredRate}%` }} />
-                  </div>
-
-                  <div className="tsu-attendee-chip-list">
-                    {responders.map((name) => {
-                      const slotStatus = candidate.statusByResponder.get(name) ?? "unanswered";
-                      return (
-                        <span className={`tsu-attendee-chip ${slotStatus}`} key={`${candidate.candidateId}-${name}`}>
-                          {STATUS_LABEL[slotStatus]} {name}
-                        </span>
-                      );
-                    })}
-                  </div>
-
-                  <div className="tsu-card-foot">
-                    <span className="ok">■ {candidate.ok} 参加できる</span>
-                    <span className="maybe">■ {candidate.maybe} 調整できるかも</span>
-                    <span className="ng">■ {candidate.ng} 参加できない</span>
-                    <span className="unanswered">■ {candidate.unanswered} 未回答</span>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
+        <aside className="tsu-side tsu-results-side">
+          <section className="tsu-panel tsu-results-info-panel">
+            <h2>{event.title}</h2>
+            {event.description && <p className="tsu-response-description">{event.description}</p>}
+            <div className="tsu-results-info-list">
+              <p>
+                <strong>主催者:</strong> {event.organizerName}
+              </p>
+              <p>
+                <strong>受付終了:</strong> 未設定
+              </p>
+              <p>
+                <strong>日程調整URL:</strong>{" "}
+                <a className="tsu-issued-link" href={eventUrl} rel="noreferrer" target="_blank">
+                  {eventUrl}
+                </a>
+              </p>
+              <p>
+                <strong>結果URL:</strong>{" "}
+                <a className="tsu-issued-link" href={resultUrl} rel="noreferrer" target="_blank">
+                  {resultUrl}
+                </a>
+              </p>
+            </div>
+          </section>
+        </aside>
       </section>
     </main>
   );

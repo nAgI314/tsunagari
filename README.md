@@ -35,14 +35,32 @@ bun run test
 
 frontend + backend + PostgreSQL をまとめて起動できます。
 
+### A. 既存Apacheを入口に使う（推奨）
+
 1. ルートに `.env` を作成
+2. `docker compose up -d --build`
+3. ホストApacheから `http://127.0.0.1:8080` へリバースプロキシ
+
+このモードでは Docker 側は `127.0.0.1:8080` のみ公開するため、ホストApacheと 80/443 が競合しません。
+
+Apache設定例（VirtualHost内）:
+
+```apache
+ProxyPreserveHost On
+ProxyPass / http://127.0.0.1:8080/
+ProxyPassReverse / http://127.0.0.1:8080/
+```
+
+### B. Caddyを入口に使う（自動HTTPS）
+
+1. ルートに `.env` を作成（`APP_DOMAIN` を設定）
 2. DNS でドメインの A レコードをサーバIPへ向ける
 3. サーバ側で `80/tcp` と `443/tcp` を開ける
-4. `docker compose up -d --build`
+4. `docker compose --profile caddy up -d --build`
 
 主要な環境変数（未指定時はデフォルトあり）:
 
-- `APP_DOMAIN`（例: `example.com`）
+- `APP_DOMAIN`（Caddyモード時のみ。例: `example.com`）
 - `DB_USERNAME`
 - `DB_PASSWORD`
 - `DB_NAME`
@@ -51,11 +69,11 @@ frontend + backend + PostgreSQL をまとめて起動できます。
 
 公開ポート:
 
-- `http://localhost` / `https://localhost`（ローカル確認）
-- `https://<APP_DOMAIN>`（外部公開）
+- `http://127.0.0.1:8080`（Apache入口モード）
+- `https://<APP_DOMAIN>`（Caddy入口モード）
 
-Caddy がエッジで HTTPS を自動発行し、frontend(Apache) にリバースプロキシします。
-frontend(Apache) は `/api/*` を backend へリバースプロキシします。
+frontend(Apacheコンテナ) は `/api/*` を backend へリバースプロキシします。
+Caddyモードでは Caddy がエッジで HTTPS を自動発行し、frontend へリバースプロキシします。
 
 `.env` の例:
 

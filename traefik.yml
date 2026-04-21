@@ -1,0 +1,22 @@
+entryPoints:
+  web:
+    address: ":80"
+
+  websecure:
+    address: ":443"
+
+api:
+  dashboard: true
+  insecure: true
+
+providers:
+  docker:
+    exposedByDefault: false
+
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: あなたのメール
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web

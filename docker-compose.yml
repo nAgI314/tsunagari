@@ -19,6 +19,8 @@ services:
       context: .
       dockerfile: backend/Dockerfile
     restart: unless-stopped
+    networks:
+    - traefik-network
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -39,29 +41,25 @@ services:
       args:
         VITE_PUBLIC_APP_ORIGIN: ${VITE_PUBLIC_APP_ORIGIN:-https://localhost}
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    networks:
+    - traefik-network
     restart: unless-stopped
     depends_on:
       - backend
-    ports:
-      - "127.0.0.1:8080:80"
 
-  caddy:
-    image: caddy:2.8-alpine
-    profiles: ["caddy"]
-    restart: unless-stopped
-    depends_on:
-      - frontend
-    environment:
-      APP_DOMAIN: ${APP_DOMAIN:-localhost}
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data
-      - caddy-config:/config
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`tsunagari.minagiri.net`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+    
 
 volumes:
   postgres-data:
   caddy-data:
   caddy-config:
+
+networks:
+  traefik-network:
+    external: true

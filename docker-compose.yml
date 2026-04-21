@@ -15,6 +15,15 @@ services:
       retries: 10
 
   backend:
+    labels:
+    - "traefik.enable=true"
+
+    # /api を backend にルーティング
+    - "traefik.http.routers.backend.rule=Host(`tsunagari.minagiri.net`) && PathPrefix(`/api`)"
+    - "traefik.http.routers.backend.entrypoints=websecure"
+    - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+
+    - "traefik.http.services.backend.loadbalancer.server.port=3000"
     build:
       context: .
       dockerfile: backend/Dockerfile

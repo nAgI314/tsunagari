@@ -8,6 +8,7 @@
   --tsu-primary: #185fa5;
   --tsu-primary-strong: #0d4e8b;
   --tsu-gcal-bg: #e8f1fc;
+  --tsu-gcal-bg-event: rgba(232, 241, 252, 0.78);
   --tsu-gcal-border: #378add;
   --tsu-slot-ok: #e3f5ee;
   --tsu-slot-ok-border: #1d9e75;
@@ -138,6 +139,7 @@ body {
     --tsu-soft-border: #2a303b;
     --tsu-text: #e7edf8;
     --tsu-subtext: #aab4c7;
+    --tsu-gcal-bg-event: rgba(79, 130, 193, 0.8);
   }
 }
 
@@ -216,7 +218,7 @@ body {
 }
 
 .tsu-time-axis-body {
-  height: 960px;
+  height: 1000px;
 }
 
 .tsu-time-axis-cell {
@@ -233,12 +235,17 @@ body {
   padding-top: 2px;
 }
 
+.tsu-time-axis-cell.tail {
+  padding-top: 0;
+}
+
 .tsu-week-scroller {
   overflow-x: auto;
   overflow-y: auto;
   height: 100%;
   display: flex;
   align-items: flex-start;
+  box-sizing: border-box;
   min-height: 0;
   scroll-behavior: smooth;
   overscroll-behavior: contain;
@@ -309,12 +316,12 @@ body {
 .tsu-week-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  height: 960px;
+  height: 1000px;
 }
 
 .tsu-day-col {
   position: relative;
-  height: 960px;
+  height: 1000px;
   display: flex;
   flex-direction: column;
   border-right: 1px solid var(--tsu-soft-border);
@@ -342,6 +349,12 @@ body {
   cursor: pointer;
   position: relative;
   z-index: 1;
+}
+
+.tsu-hour-tail {
+  flex: 0 0 40px;
+  width: 100%;
+  border-bottom: 1px solid var(--tsu-soft-border);
 }
 
 .tsu-slot-layer {
@@ -549,7 +562,7 @@ body {
   right: 3px;
   border-radius: 4px;
   border-left: 3px solid var(--tsu-gcal-border);
-  background: var(--tsu-gcal-bg);
+  background: var(--tsu-gcal-bg-event);
   color: #0c447c;
   font-size: 10px;
   padding: 3px 4px;
@@ -677,6 +690,8 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--tsu-bg);
+  min-height: 0;
+  overflow: hidden;
 }
 
 .tsu-panel {

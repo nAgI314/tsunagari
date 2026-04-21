@@ -195,6 +195,7 @@ export function SchedulerPage() {
             />
             <CandidateSlotPanel
               candidateSlots={candidateSlots}
+              className="tsu-candidate-scroll-panel"
               screenMode={screenMode}
               slotSummaryLabel={slotSummaryLabel}
               onSlotClick={onCandidateSlotClick}

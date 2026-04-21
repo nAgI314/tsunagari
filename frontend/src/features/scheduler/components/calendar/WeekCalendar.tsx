@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from "react";
 import type { RefObject } from "react";
 import { HOURS, START_HOUR } from "../../model/constants";
 import { addWeeks, startOfWeek } from "../../utils/date";
@@ -37,9 +38,29 @@ export function WeekCalendar({
   getSlotAnswer,
   onSelectSlotAnswer,
 }: Props) {
+  const lastScrollTopRef = useRef(0);
+
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) {
+      return;
+    }
+    if (scroller.scrollTop <= 2 && lastScrollTopRef.current > 2) {
+      scroller.scrollTop = lastScrollTopRef.current;
+    }
+  }, [scrollerRef, slotByKey]);
+
+  const handleScroll = () => {
+    const scroller = scrollerRef.current;
+    if (scroller) {
+      lastScrollTopRef.current = scroller.scrollTop;
+    }
+    onScroll();
+  };
+
   return (
     <div className="tsu-week-layout">
-      <div className="tsu-week-scroller" ref={scrollerRef} onScroll={onScroll}>
+      <div className="tsu-week-scroller" ref={scrollerRef} onScroll={handleScroll}>
         <div className="tsu-time-axis">
           <div className="tsu-time-axis-head" />
           <div className="tsu-time-axis-body">
@@ -49,6 +70,7 @@ export function WeekCalendar({
                 <div key={hour} className="tsu-time-axis-cell">{`${hour}:00`}</div>
               );
             })}
+            <div className="tsu-time-axis-cell tail" />
           </div>
         </div>
         {offsets.map((offset) => (
@@ -61,13 +83,13 @@ export function WeekCalendar({
             slotByKey={slotByKey}
             googleEvents={googleEvents}
             onWeekCellClick={onWeekCellClick}
-              onCandidateSlotClickById={onCandidateSlotClickById}
-              onRemoveCandidateSlot={onRemoveCandidateSlot}
-              onMoveCandidateSlot={onMoveCandidateSlot}
-              getSlotAnswer={getSlotAnswer}
-              onSelectSlotAnswer={onSelectSlotAnswer}
-            />
-          ))}
+            onCandidateSlotClickById={onCandidateSlotClickById}
+            onRemoveCandidateSlot={onRemoveCandidateSlot}
+            onMoveCandidateSlot={onMoveCandidateSlot}
+            getSlotAnswer={getSlotAnswer}
+            onSelectSlotAnswer={onSelectSlotAnswer}
+          />
+        ))}
       </div>
     </div>
   );

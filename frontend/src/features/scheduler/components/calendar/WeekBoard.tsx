@@ -177,11 +177,14 @@ export function WeekBoard({
                   <button
                     key={`${dateKey(day)}-${hour}`}
                     className="tsu-hour-cell"
+                    onMouseDown={(event) => event.preventDefault()}
                     onClick={(event) => onWeekCellClick(day, hour, minuteFromClick(event))}
+                    tabIndex={-1}
                     type="button"
                   />
                 );
               })}
+              <div className="tsu-hour-tail" />
               <div className="tsu-slot-layer" aria-hidden>
                 {dragPreview?.dayKey === dateKey(day) && (
                   <div

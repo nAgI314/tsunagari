@@ -214,8 +214,8 @@ export function EventResultsPage({ linkId }: Props) {
     <main className="tsu-root">
       <section className="tsu-topbar">
         <div className="tsu-brand">
-          <span className="tsu-brand-name">回答一覧</span>
-          <span className="tsu-gcal-pill">{event.title}</span>
+          <span className="tsu-brand-name">Tsunagari</span>
+          <span className="tsu-gcal-pill">回答一覧</span>
         </div>
         <a className="tsu-today-button" href={`/event/${linkId}`}>
           回答ページへ

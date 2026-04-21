@@ -2,9 +2,12 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
+import { GoogleAuthProvider } from './features/auth/GoogleAuthContext.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
+    <GoogleAuthProvider>
+      <App />
+    </GoogleAuthProvider>
   </StrictMode>,
 )

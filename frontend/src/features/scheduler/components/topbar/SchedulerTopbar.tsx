@@ -23,7 +23,7 @@ export function SchedulerTopbar({
     <header className="tsu-topbar">
       <div className="tsu-brand">
         <span className="tsu-brand-name">Tsunagari</span>
-        <span className="tsu-gcal-pill">Googleカレンダー連携</span>
+        {/* <span className="tsu-gcal-pill">日程調整作成</span> */}
       </div>
       <div className="tsu-top-controls">
         <ViewModeToggle value={viewMode} onChange={onViewModeChange} />

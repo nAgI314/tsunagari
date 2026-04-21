@@ -1,12 +1,14 @@
 import { useMemo, useState } from "react";
 import { AppShell } from "@/app/AppShell";
 import { createEvent } from "@/api";
+import { useGoogleAuth } from "@/features/auth/GoogleAuthContext";
 import { Button } from "@/components/ui/button";
 import { CalendarViewport } from "../components/calendar/CalendarViewport";
 import { PeriodBar } from "../components/common/PeriodBar";
 import { CandidateSlotPanel } from "../components/sidebar/CandidateSlotPanel";
 import { EventInfoPanel } from "../components/sidebar/EventInfoPanel";
 import { UsagePanel } from "../components/sidebar/UsagePanel";
+import { useGoogleCalendarEvents } from "../hooks/useGoogleCalendarEvents";
 import { SchedulerTopbar } from "../components/topbar/SchedulerTopbar";
 import { useInfiniteMonthScroll } from "../hooks/useInfiniteMonthScroll";
 import { useInfiniteWeekScroll } from "../hooks/useInfiniteWeekScroll";
@@ -26,18 +28,17 @@ export function SchedulerPage() {
   const [createError, setCreateError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const appDomain = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
+  const { isLoggedIn, login, logout, accessToken } = useGoogleAuth();
 
   const {
     viewMode,
     screenMode,
-    isLoggedIn,
     slotDurationMinutes,
     candidateSlots,
     slotByKey,
     setViewMode,
     setScreenMode,
     setSlotDurationMinutes,
-    toggleLogin,
     onWeekCellClick,
     onMonthDayClick,
     onCandidateSlotClick,
@@ -56,6 +57,7 @@ export function SchedulerPage() {
   } = useInfiniteWeekScroll(now);
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
+  const { events: googleEvents } = useGoogleCalendarEvents(accessToken, isLoggedIn);
 
   const issuedLink = useMemo(() => {
     if (!createdLinkId) {
@@ -127,11 +129,17 @@ export function SchedulerPage() {
           viewMode={viewMode}
           screenMode={screenMode}
           isLoggedIn={isLoggedIn}
-          onViewModeChange={setViewMode}
-          onScreenModeChange={setScreenMode}
-          onToggleLogin={toggleLogin}
-        />
-      }
+            onViewModeChange={setViewMode}
+            onScreenModeChange={setScreenMode}
+            onToggleLogin={() => {
+              if (isLoggedIn) {
+                logout();
+                return;
+              }
+              void login();
+            }}
+          />
+        }
       body={
         <section className="tsu-body">
           <div className="tsu-calendar-area">
@@ -162,7 +170,7 @@ export function SchedulerPage() {
                 isLoggedIn={isLoggedIn}
                 slotByKey={slotByKey}
                 candidateSlots={candidateSlots}
-                googleEvents={SAMPLE_EVENTS}
+                googleEvents={isLoggedIn ? googleEvents : SAMPLE_EVENTS}
                 onWeekCellClick={onWeekCellClick}
                 onMonthDayClick={onMonthDayClick}
                 onCandidateSlotClickById={onCandidateSlotClickById}

@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import type { ScheduleEvent } from "../../../../../shared/src";
 import { AppShell } from "@/app/AppShell";
 import { EventNotFoundError, createEventResponseByLinkId, getEventByLinkId } from "@/api";
+import { useGoogleAuth } from "@/features/auth/GoogleAuthContext";
 import { Button } from "@/components/ui/button";
 import { CalendarViewport } from "@/features/scheduler/components/calendar/CalendarViewport";
 import { PeriodBar } from "@/features/scheduler/components/common/PeriodBar";
 import { CandidateSlotPanel } from "@/features/scheduler/components/sidebar/CandidateSlotPanel";
+import { useGoogleCalendarEvents } from "@/features/scheduler/hooks/useGoogleCalendarEvents";
 import { useInfiniteMonthScroll } from "@/features/scheduler/hooks/useInfiniteMonthScroll";
 import { useInfiniteWeekScroll } from "@/features/scheduler/hooks/useInfiniteWeekScroll";
 import type { AnswerStatus, CandidateSlot, ViewMode } from "@/features/scheduler/model/types";
@@ -28,13 +30,13 @@ export function EventPage({ linkId }: EventPageProps) {
   const [event, setEvent] = useState<ScheduleEvent | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("week");
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [responderName, setResponderName] = useState("");
   const [comment, setComment] = useState("");
   const [answerByCandidateId, setAnswerByCandidateId] = useState<Map<string, AnswerStatus>>(new Map());
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const { isLoggedIn, login, logout, accessToken } = useGoogleAuth();
 
   const {
     weekOffsets,
@@ -45,6 +47,7 @@ export function EventPage({ linkId }: EventPageProps) {
   } = useInfiniteWeekScroll(now);
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
+  const { events: googleEvents } = useGoogleCalendarEvents(accessToken, isLoggedIn);
 
   useEffect(() => {
     let active = true;
@@ -190,7 +193,13 @@ export function EventPage({ linkId }: EventPageProps) {
       topbar={
         <EventAnswerTopbar
           isLoggedIn={isLoggedIn}
-          onToggleLogin={() => setIsLoggedIn((prev) => !prev)}
+          onToggleLogin={() => {
+            if (isLoggedIn) {
+              logout();
+              return;
+            }
+            void login();
+          }}
           onViewModeChange={setViewMode}
           viewMode={viewMode}
         />
@@ -211,7 +220,7 @@ export function EventPage({ linkId }: EventPageProps) {
               <CalendarViewport
                 candidateSlots={candidateSlots}
                 getSlotAnswer={(slot) => answerByCandidateId.get(slot.id)}
-                googleEvents={SAMPLE_EVENTS}
+                googleEvents={isLoggedIn ? googleEvents : SAMPLE_EVENTS}
                 isLoggedIn={isLoggedIn}
                 monthOffsets={monthOffsets}
                 monthScrollerRef={monthScrollerRef}

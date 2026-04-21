@@ -4,7 +4,6 @@ import { addDays, startOfWeek, timeLabel } from "../utils/date";
 import { shiftAnswer, slotStartKey, toTimeSlot } from "../utils/slot";
 
 export function useSchedulerState(now: Date) {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [screenMode, setScreenMode] = useState<ScreenMode>("create");
   const [slotDurationMinutes, setSlotDurationMinutes] = useState(60);
@@ -109,7 +108,6 @@ export function useSchedulerState(now: Date) {
   };
 
   return {
-    isLoggedIn,
     viewMode,
     screenMode,
     slotDurationMinutes,
@@ -118,7 +116,6 @@ export function useSchedulerState(now: Date) {
     setViewMode,
     setScreenMode,
     setSlotDurationMinutes,
-    toggleLogin: () => setIsLoggedIn((prev) => !prev),
     onWeekCellClick,
     onMonthDayClick,
     onCandidateSlotClick,

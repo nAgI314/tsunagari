@@ -37,13 +37,28 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
       args:
-        VITE_PUBLIC_APP_ORIGIN: ${VITE_PUBLIC_APP_ORIGIN:-http://localhost}
+        VITE_PUBLIC_APP_ORIGIN: ${VITE_PUBLIC_APP_ORIGIN:-https://localhost}
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
     restart: unless-stopped
     depends_on:
       - backend
+
+  caddy:
+    image: caddy:2.8-alpine
+    restart: unless-stopped
+    depends_on:
+      - frontend
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:-localhost}
     ports:
       - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
 
 volumes:
   postgres-data:
+  caddy-data:
+  caddy-config:

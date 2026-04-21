@@ -136,6 +136,33 @@ export function EventPage({ linkId }: EventPageProps) {
 
   const hasAnsweredAll = event ? event.candidates.every((candidate) => answerByCandidateId.has(candidate.id)) : false;
   const responseDeadlineLabel = "回答期限: 未設定";
+  const activeGoogleEvents = isLoggedIn ? googleEvents : [];
+
+  const onAutoFillByGoogleCalendar = () => {
+    setSubmitError(null);
+    setSubmitMessage(null);
+    if (!event) {
+      return;
+    }
+    if (!isLoggedIn) {
+      setSubmitError("Googleでログインすると自動判定できます。");
+      return;
+    }
+
+    const next = new Map<string, AnswerStatus>();
+    for (const candidate of event.candidates) {
+      const candidateStart = new Date(candidate.start).getTime();
+      const candidateEnd = new Date(candidate.end).getTime();
+      const hasOverlap = activeGoogleEvents.some((googleEvent) => {
+        const googleStart = googleEvent.start.getTime();
+        const googleEnd = googleEvent.end.getTime();
+        return candidateStart < googleEnd && googleStart < candidateEnd;
+      });
+      next.set(candidate.id, hasOverlap ? "ng" : "ok");
+    }
+    setAnswerByCandidateId(next);
+    setSubmitMessage("Googleカレンダーとの重なりで自動判定しました。");
+  };
 
   const onSubmitResponse = async () => {
     setSubmitError(null);
@@ -266,6 +293,13 @@ export function EventPage({ linkId }: EventPageProps) {
                 {submitError && <span className="error">{submitError}</span>}
                 {!submitError && submitMessage && <span>{submitMessage}</span>}
               </div>
+              <Button
+                onClick={onAutoFillByGoogleCalendar}
+                type="button"
+                variant="outline"
+              >
+                Google予定で自動判定<br/>（重複なし=○ / 重複あり=×）
+              </Button>
               <Button
                 className="tsu-submit-primary"
                 disabled={submitting}

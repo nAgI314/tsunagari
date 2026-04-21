@@ -40,7 +40,7 @@ export function useInfiniteMonthScroll(baseDate: Date) {
     requestAnimationFrame(() => {
       scroller.scrollTop = scroller.scrollHeight / 2 - scroller.clientHeight / 2;
     });
-  }, []);
+  });
 
   const onMonthScroll = () => {
     const scroller = monthScrollerRef.current;

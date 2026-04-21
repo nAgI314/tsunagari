@@ -13,10 +13,16 @@ type WeekWindow = {
   max: number;
 };
 
+const TIME_AXIS_WIDTH = 54;
+
 function initialScrollTopForDate(date: Date): number {
   const minutesFromStart = date.getHours() * 60 + date.getMinutes();
   const top = (minutesFromStart / 60) * HOUR_HEIGHT - HOUR_HEIGHT * 2;
   return Math.max(0, top);
+}
+
+function initialScrollLeftForCurrentWeek(): number {
+  return TIME_AXIS_WIDTH + WEEK_WINDOW_PADDING * WEEK_BOARD_WIDTH;
 }
 
 export function useInfiniteWeekScroll(baseDate: Date) {
@@ -47,13 +53,13 @@ export function useInfiniteWeekScroll(baseDate: Date) {
     requestAnimationFrame(() => {
       const previousBehavior = scroller.style.scrollBehavior;
       scroller.style.scrollBehavior = "auto";
-      scroller.scrollLeft = scroller.scrollWidth / 2 - scroller.clientWidth / 2;
+      scroller.scrollLeft = initialScrollLeftForCurrentWeek();
       scroller.scrollTop = initialScrollTopForDate(baseDate);
       requestAnimationFrame(() => {
         scroller.style.scrollBehavior = previousBehavior;
       });
     });
-  }, []);
+  });
 
   const onWeekScroll = () => {
     const scroller = weekScrollerRef.current;
@@ -73,7 +79,7 @@ export function useInfiniteWeekScroll(baseDate: Date) {
       setWeekWindow((prev) => ({ min: prev.min, max: prev.max + WEEK_EXPAND_SIZE }));
     }
 
-    const rawIndex = Math.round(scroller.scrollLeft / WEEK_BOARD_WIDTH);
+    const rawIndex = Math.round((scroller.scrollLeft - TIME_AXIS_WIDTH) / WEEK_BOARD_WIDTH);
     const offset = rawIndex + weekWindow.min;
     setWeekAnchor(addWeeks(startOfWeek(baseDate), offset));
   };
@@ -90,7 +96,7 @@ export function useInfiniteWeekScroll(baseDate: Date) {
         return;
       }
       scroller.scrollTo({
-        left: scroller.scrollWidth / 2 - scroller.clientWidth / 2,
+        left: initialScrollLeftForCurrentWeek(),
         top: initialScrollTopForDate(baseDate),
         behavior: "smooth",
       });

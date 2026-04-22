@@ -14,7 +14,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - traefik-network
+      - internal:
 
   backend:
     labels:
@@ -32,6 +32,7 @@ services:
     restart: unless-stopped
     networks:
       - traefik-network
+      - internal
     environment:
       DB_HOST: db
       DB_PORT: 5432

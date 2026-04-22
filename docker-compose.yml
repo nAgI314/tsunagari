@@ -14,7 +14,7 @@ services:
       timeout: 5s
       retries: 10
     networks:
-      - internal:
+      - internal
 
   backend:
     labels:
@@ -65,7 +65,7 @@ services:
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
-      -  "traefik.docker.network=traefik-network"
+      - "traefik.docker.network=traefik-network"
     
 
 volumes:
@@ -77,3 +77,4 @@ networks:
   traefik-network:
     name: traefik-network
     external: true
+  internal:

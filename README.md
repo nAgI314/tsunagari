@@ -40,7 +40,8 @@ frontend + backend + PostgreSQL をまとめて起動できます。
 1. ルートに `.env` を作成（`APP_DOMAIN` を設定）
 2. DNS でドメインの A レコードをサーバIPへ向ける
 3. サーバ側で `80/tcp` と `443/tcp` を開ける
-4. `docker compose up -d --build`
+4. `docker network create traefik-network`（初回のみ）
+5. `docker compose up -d --build`
 
 主要な環境変数（未指定時はデフォルトあり）:
 

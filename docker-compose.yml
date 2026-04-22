@@ -1,4 +1,17 @@
 services:
+  traefik:
+    image: traefik:v3.1
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - letsencrypt:/letsencrypt
+    networks:
+      - traefik-network
+
   db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -19,13 +32,11 @@ services:
   backend:
     labels:
       - "traefik.enable=true"
-
-      # /api を backend にルーティング
-      - "traefik.http.routers.backend.rule=Host(`tsunagari.minagiri.net`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.rule=Host(`${APP_DOMAIN:-localhost}`) && PathPrefix(`/api`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
-
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      - "traefik.docker.network=traefik-network"
     build:
       context: .
       dockerfile: backend/Dockerfile
@@ -61,20 +72,17 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`tsunagari.minagiri.net`)"
+      - "traefik.http.routers.frontend.rule=Host(`${APP_DOMAIN:-localhost}`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
       - "traefik.docker.network=traefik-network"
-    
 
 volumes:
   postgres-data:
-  caddy-data:
-  caddy-config:
+  letsencrypt:
 
 networks:
   traefik-network:
     name: traefik-network
-    external: true
   internal:

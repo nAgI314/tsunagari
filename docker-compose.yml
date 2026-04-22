@@ -13,23 +13,25 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - traefik-network
 
   backend:
     labels:
-    - "traefik.enable=true"
+      - "traefik.enable=true"
 
-    # /api を backend にルーティング
-    - "traefik.http.routers.backend.rule=Host(`tsunagari.minagiri.net`) && PathPrefix(`/api`)"
-    - "traefik.http.routers.backend.entrypoints=websecure"
-    - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
+      # /api を backend にルーティング
+      - "traefik.http.routers.backend.rule=Host(`tsunagari.minagiri.net`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
 
-    - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      - "traefik.http.services.backend.loadbalancer.server.port=3000"
     build:
       context: .
       dockerfile: backend/Dockerfile
     restart: unless-stopped
     networks:
-    - traefik-network
+      - traefik-network
     environment:
       DB_HOST: db
       DB_PORT: 5432
@@ -51,7 +53,7 @@ services:
         VITE_PUBLIC_APP_ORIGIN: ${VITE_PUBLIC_APP_ORIGIN:-https://localhost}
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
     networks:
-    - traefik-network
+      - traefik-network
     restart: unless-stopped
     depends_on:
       - backend
@@ -62,7 +64,7 @@ services:
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
-      -  traefik.docker.network=traefik-network
+      -  "traefik.docker.network=traefik-network"
     
 
 volumes:

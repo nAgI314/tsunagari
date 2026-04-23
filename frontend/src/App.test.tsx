@@ -14,8 +14,8 @@ describe("App", () => {
     expect(screen.getByText("Tsunagari")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Googleでログイン" })).toBeInTheDocument();
     expect(screen.getByText("週表示: 左右スクロールで前後の週を探索")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: import.meta.env.VITE_PUBLIC_APP_ORIGIN + "/privacy-policy" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: import.meta.env.VITE_PUBLIC_APP_ORIGIN + "/terms" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "利用規約" })).toBeInTheDocument();
   });
 
   test("toggles login label", async () => {

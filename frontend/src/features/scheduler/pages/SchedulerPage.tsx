@@ -46,7 +46,7 @@ export function SchedulerPage() {
     removeCandidateSlot,
     moveCandidateSlot,
     slotSummaryLabel,
-  } = useSchedulerState(now);
+  } = useSchedulerState();
 
   const {
     weekOffsets,

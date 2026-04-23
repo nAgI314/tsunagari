@@ -3,7 +3,7 @@ import type { CandidateSlot, ScreenMode, ViewMode } from "../model/types";
 import { timeLabel } from "../utils/date";
 import { shiftAnswer, slotStartKey, toTimeSlot } from "../utils/slot";
 
-export function useSchedulerState(now: Date) {
+export function useSchedulerState() {
   const [viewMode, setViewMode] = useState<ViewMode>("week");
   const [screenMode, setScreenMode] = useState<ScreenMode>("create");
   const [slotDurationMinutes, setSlotDurationMinutes] = useState(60);

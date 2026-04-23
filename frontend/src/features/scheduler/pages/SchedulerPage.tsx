@@ -210,16 +210,18 @@ export function SchedulerPage() {
             {createError && <span className="error">{createError}</span>}
             {!createError && issuedLink && (
               <div className="tsu-issued-link-row">
+                <span>作成した日程調整: </span>
                 <a className="tsu-issued-link" href={issuedLink} rel="noreferrer" target="_blank">
                   {issuedLink}
                 </a>
-                <Button onClick={() => void onCopyLink()} type="button" variant="outline">
+                {/* <Button onClick={() => void onCopyLink()} type="button" variant="outline">
                   {copied ? "コピー済み" : "コピー"}
-                </Button>
+                </Button> */}
               </div>
             )}
             {!createError && issuedResultsLink && (
               <div className="tsu-issued-link-row">
+                <span>回答一覧: </span>
                 <a className="tsu-issued-link" href={issuedResultsLink} rel="noreferrer" target="_blank">
                   {issuedResultsLink}
                 </a>

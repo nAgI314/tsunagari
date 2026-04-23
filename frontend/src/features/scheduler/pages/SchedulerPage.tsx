@@ -199,6 +199,7 @@ export function SchedulerPage() {
               screenMode={screenMode}
               slotSummaryLabel={slotSummaryLabel}
               onSlotClick={onCandidateSlotClick}
+              onRemoveCandidateSlot={removeCandidateSlot}
             />
             <UsagePanel />
           </aside>

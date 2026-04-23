@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import type { AnswerStatus, CandidateSlot, ScreenMode } from "../../model/types";
 import { AnswerChoiceButtons } from "../common/AnswerChoiceButtons";
 
@@ -7,6 +8,7 @@ type Props = {
   screenMode: ScreenMode;
   slotSummaryLabel: (slot: CandidateSlot) => ReactNode;
   onSlotClick: (slot: CandidateSlot) => void;
+  onRemoveCandidateSlot?: (slotId: string) => void;
   getSlotAnswer?: (slot: CandidateSlot) => AnswerStatus | undefined;
   onSelectSlotAnswer?: (slotId: string, status: AnswerStatus) => void;
   className?: string;
@@ -59,6 +61,7 @@ export function CandidateSlotPanel({
   screenMode,
   slotSummaryLabel,
   onSlotClick,
+  onRemoveCandidateSlot,
   getSlotAnswer,
   onSelectSlotAnswer,
   className,
@@ -72,24 +75,53 @@ export function CandidateSlotPanel({
         {candidateSlots
           .slice()
           .sort((a, b) => a.start.getTime() - b.start.getTime())
-          .map((slot) => (
-            <button
-              key={slot.id}
-              className={`tsu-slot-item ${slotStatusClass(slot, screenMode, getSlotAnswer)}`}
-              onClick={() => onSlotClick(slot)}
-              type="button"
-            >
-              <span className="tsu-slot-label">{slotSummaryLabel(slot)}</span>
-              {screenMode === "answer" && onSelectSlotAnswer ? (
-                <AnswerChoiceButtons
-                  onSelect={(status) => onSelectSlotAnswer(slot.id, status)}
-                  value={getSlotAnswer ? getSlotAnswer(slot) : slot.answer}
-                />
-              ) : (
-                <strong>{slotStatusLabel(slot, screenMode, getSlotAnswer)}</strong>
-              )}
-            </button>
-          ))}
+          .map((slot) => {
+            const canRemove = screenMode === "create" && onRemoveCandidateSlot;
+            return (
+              <article
+                key={slot.id}
+                className={`tsu-slot-item ${slotStatusClass(slot, screenMode, getSlotAnswer)}${canRemove ? " with-delete" : ""}`}
+                onClick={() => onSlotClick(slot)}
+                onKeyDown={(event) => {
+                  if ((event.key === "Enter" || event.key === " ") && event.currentTarget === event.target) {
+                    event.preventDefault();
+                    onSlotClick(slot);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+              >
+                {canRemove && (
+                  <Button
+                    aria-label="候補を削除"
+                    className="tsu-slot-item-delete"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onRemoveCandidateSlot(slot.id);
+                    }}
+                    type="button"
+                    variant="ghost"
+                  >
+                    ✕
+                  </Button>
+                )}
+                <span className="tsu-slot-label">{slotSummaryLabel(slot)}</span>
+                {screenMode === "answer" && onSelectSlotAnswer ? (
+                  <span
+                    onClick={(event) => event.stopPropagation()}
+                    onKeyDown={(event) => event.stopPropagation()}
+                  >
+                    <AnswerChoiceButtons
+                      onSelect={(status) => onSelectSlotAnswer(slot.id, status)}
+                      value={getSlotAnswer ? getSlotAnswer(slot) : slot.answer}
+                    />
+                  </span>
+                ) : (
+                  <strong>{slotStatusLabel(slot, screenMode, getSlotAnswer)}</strong>
+                )}
+              </article>
+            );
+          })}
       </div>
     </section>
   );

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import type { CandidateSlot, ScreenMode, ViewMode } from "../model/types";
-import { addDays, startOfWeek, timeLabel } from "../utils/date";
+import { timeLabel } from "../utils/date";
 import { shiftAnswer, slotStartKey, toTimeSlot } from "../utils/slot";
 
 export function useSchedulerState(now: Date) {
@@ -9,9 +9,9 @@ export function useSchedulerState(now: Date) {
   const [slotDurationMinutes, setSlotDurationMinutes] = useState(60);
 
   const [candidateSlots, setCandidateSlots] = useState<CandidateSlot[]>([
-    toTimeSlot(addDays(startOfWeek(now), 1), 10, 0, 60),
-    toTimeSlot(addDays(startOfWeek(now), 2), 14, 0, 60),
-    toTimeSlot(addDays(startOfWeek(now), 4), 10, 0, 60),
+    // toTimeSlot(addDays(startOfWeek(now), 1), 10, 0, 60),
+    // toTimeSlot(addDays(startOfWeek(now), 2), 14, 0, 60),
+    // toTimeSlot(addDays(startOfWeek(now), 4), 10, 0, 60),
   ]);
 
   const slotByKey = useMemo(() => {

@@ -51,24 +51,26 @@ export function EventInfoPanel({
       <h2>イベント情報</h2>
       <label>
         タイトル
-        <Input onChange={(event) => onTitleChange(event.target.value)} value={title} />
+        <Input onChange={(event) => onTitleChange(event.target.value)} value={title} placeholder="イベントのタイトルを入力してください" />
       </label>
       <label>
         主催者名
         <Input
           onChange={(event) => onOrganizerNameChange(event.target.value)}
           value={organizerName}
+          placeholder="主催者名を入力してください"
         />
       </label>
       <label>
         説明
-        <Textarea onChange={(event) => onDescriptionChange(event.target.value)} value={description} />
+        <Textarea onChange={(event) => onDescriptionChange(event.target.value)} value={description} placeholder="イベントの説明を入力してください" />
       </label>
       <label>
         回答期限
         <Input
           onChange={(event) => onResponseDeadlineChange(event.target.value)}
           value={responseDeadline}
+          placeholder="回答期限を入力してください"
         />
       </label>
       <label>

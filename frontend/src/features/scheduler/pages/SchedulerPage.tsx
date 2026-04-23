@@ -19,10 +19,10 @@ import "../styles/scheduler.css";
 
 export function SchedulerPage() {
   const now = useMemo(() => new Date(), []);
-  const [title, setTitle] = useState("チームキックオフ");
-  const [organizerName, setOrganizerName] = useState("あなた");
-  const [description, setDescription] = useState("Googleカレンダーの予定と重ねて候補日を調整します。");
-  const [responseDeadline, setResponseDeadline] = useState("2026-04-30");
+  const [title, setTitle] = useState("");
+  const [organizerName, setOrganizerName] = useState("");
+  const [description, setDescription] = useState("");
+  const [responseDeadline, setResponseDeadline] = useState("");
   const [creating, setCreating] = useState(false);
   const [createdLinkId, setCreatedLinkId] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
@@ -215,9 +215,9 @@ export function SchedulerPage() {
                 <a className="tsu-issued-link" href={issuedLink} rel="noreferrer" target="_blank">
                   {issuedLink}
                 </a>
-                {/* <Button onClick={() => void onCopyLink()} type="button" variant="outline">
+                <Button onClick={() => void onCopyLink()} type="button" variant="outline">
                   {copied ? "コピー済み" : "コピー"}
-                </Button> */}
+                </Button>
               </div>
             )}
             {!createError && issuedResultsLink && (

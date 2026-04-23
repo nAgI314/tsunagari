@@ -3,6 +3,7 @@ import type { ScheduleEvent, ScheduleResponse } from "../../../../../shared/src"
 import { EventNotFoundError, getEventByLinkId, listEventResponsesByLinkId } from "@/api";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { timeLabel } from "@/features/scheduler/utils/date";
+import { SiteFooter } from "@/app/SiteFooter";
 import { Circle, Triangle, X } from "lucide-react";
 
 type Props = {
@@ -367,6 +368,9 @@ export function EventResultsPage({ linkId }: Props) {
           </section>
         </aside>
       </section>
+      <footer className="tsu-site-footer">
+        <SiteFooter />
+      </footer>
     </main>
   );
 }

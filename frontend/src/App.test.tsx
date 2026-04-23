@@ -14,6 +14,7 @@ describe("App", () => {
     expect(screen.getByText("Tsunagari")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Googleでログイン" })).toBeInTheDocument();
     expect(screen.getByText("週表示: 左右スクロールで前後の週を探索")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toBeInTheDocument();
   });
 
   test("toggles login label", async () => {

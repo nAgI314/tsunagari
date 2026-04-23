@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { SiteFooter } from "@/app/SiteFooter";
 
 type Props = {
   topbar: ReactNode;
@@ -12,6 +13,9 @@ export function AppShell({ topbar, body, footer }: Props) {
       {topbar}
       {body}
       {footer ? <footer className="tsu-footer">{footer}</footer> : null}
+      <footer className="tsu-site-footer">
+        <SiteFooter />
+      </footer>
     </main>
   );
 }

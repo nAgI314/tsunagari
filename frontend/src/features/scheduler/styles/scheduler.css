@@ -876,6 +876,35 @@ body {
   gap: 8px;
 }
 
+.tsu-site-footer {
+  border: 1px solid var(--tsu-soft-border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--tsu-panel) 85%, var(--tsu-bg) 15%);
+  padding: 9px 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.tsu-footer-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--tsu-subtext);
+  font-size: 12px;
+}
+
+.tsu-footer-link {
+  color: var(--tsu-primary-strong);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.tsu-footer-link:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .tsu-response-panel {
   display: flex;
   flex-direction: column;
@@ -1290,6 +1319,7 @@ body {
 
 .tsu-issued-link-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
@@ -1347,5 +1377,10 @@ body {
 
   .tsu-today-button {
     align-self: flex-end;
+  }
+
+  .tsu-footer {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }

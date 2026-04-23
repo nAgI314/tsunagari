@@ -2,6 +2,7 @@ import { EventPage } from "@/features/event/pages/EventPage";
 import { EventResultsPage } from "@/features/event/pages/EventResultsPage";
 import { SchedulerPage } from "@/features/scheduler/pages/SchedulerPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
 
 function App() {
   const pathname = window.location.pathname;
@@ -19,6 +20,10 @@ function App() {
 
   if (eventMatch) {
     return <EventPage linkId={decodeURIComponent(eventMatch[1])} />;
+  }
+
+  if (normalizedPath === "/privacy-policy") {
+    return <PrivacyPolicyPage />;
   }
 
   return <NotFoundPage />;

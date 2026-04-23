@@ -15,6 +15,7 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "Googleでログイン" })).toBeInTheDocument();
     expect(screen.getByText("週表示: 左右スクロールで前後の週を探索")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "プライバシーポリシー" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "利用規約" })).toBeInTheDocument();
   });
 
   test("toggles login label", async () => {

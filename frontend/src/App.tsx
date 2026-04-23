@@ -3,6 +3,7 @@ import { EventResultsPage } from "@/features/event/pages/EventResultsPage";
 import { SchedulerPage } from "@/features/scheduler/pages/SchedulerPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { PrivacyPolicyPage } from "@/pages/PrivacyPolicyPage";
+import { TermsOfServicePage } from "@/pages/TermsOfServicePage";
 
 function App() {
   const pathname = window.location.pathname;
@@ -24,6 +25,10 @@ function App() {
 
   if (normalizedPath === "/privacy-policy") {
     return <PrivacyPolicyPage />;
+  }
+
+  if (normalizedPath === "/terms") {
+    return <TermsOfServicePage />;
   }
 
   return <NotFoundPage />;

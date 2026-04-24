@@ -1,5 +1,5 @@
 export function SiteFooter() {
-  const privacyPolicyHref = "/privacy-policy";
+  const privacyPolicyHref = "/ policy";
   const termsHref = "/terms";
   const appOrigin = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
   const privacyPolicyUrl = appOrigin ? new URL(privacyPolicyHref, appOrigin).toString() : privacyPolicyHref;

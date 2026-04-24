@@ -23,7 +23,7 @@ function App() {
     return <EventPage linkId={decodeURIComponent(eventMatch[1])} />;
   }
 
-  if (normalizedPath === "/privacy-policy") {
+  if (normalizedPath === "/ policy") {
     return <PrivacyPolicyPage />;
   }
 

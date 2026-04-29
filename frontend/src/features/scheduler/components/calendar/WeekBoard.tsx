@@ -8,6 +8,18 @@ import { Button } from "@/components/ui/button";
 import { AnswerChoiceButtons } from "../common/AnswerChoiceButtons";
 import { GoogleEventLayer } from "./GoogleEventLayer";
 
+let transparentDragImage: HTMLImageElement | null = null;
+function getTransparentDragImage(): HTMLImageElement {
+  if (transparentDragImage) {
+    return transparentDragImage;
+  }
+  const image = new Image();
+  image.src =
+    "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+  transparentDragImage = image;
+  return image;
+}
+
 type Props = {
   weekStart: Date;
   now: Date;
@@ -90,9 +102,13 @@ export function WeekBoard({
   const days = Array.from({ length: 7 }, (_, index) => addDays(weekStart, index));
   const [draggingSlotId, setDraggingSlotId] = useState<string | null>(null);
   const [dragGrabOffsetPx, setDragGrabOffsetPx] = useState(0);
-  const [dragPreview, setDragPreview] = useState<{ dayKey: string; top: number; height: number } | null>(
-    null,
-  );
+  const [dragPreview, setDragPreview] = useState<{
+    dayKey: string;
+    top: number;
+    height: number;
+    start: Date;
+    end: Date;
+  } | null>(null);
 
   const draggedSlot = draggingSlotId
     ? Array.from(slotByKey.values()).find((slot) => slot.id === draggingSlotId) ?? null
@@ -100,7 +116,7 @@ export function WeekBoard({
   const draggedDurationMinutes = draggedSlot
     ? (draggedSlot.end.getTime() - draggedSlot.start.getTime()) / (1000 * 60)
     : 0;
-  const draggedHeightPx = Math.max(16, (draggedDurationMinutes / 60) * HOUR_HEIGHT);
+  const draggedHeightPx = draggedSlot ? toHeightPx(draggedSlot.start, draggedSlot.end) : 0;
 
   const getDropPosition = (clientY: number, columnTop: number) => {
     const offsetFromTop = clientY - columnTop - dragGrabOffsetPx;
@@ -112,6 +128,12 @@ export function WeekBoard({
     const hour = START_HOUR + Math.floor(snappedMinutes / 60);
     const minute = snappedMinutes % 60;
     return { hour, minute, top: snappedTop };
+  };
+
+  const buildDragPreviewRange = (day: Date, hour: number, minute: number) => {
+    const start = new Date(day.getFullYear(), day.getMonth(), day.getDate(), hour, minute, 0, 0);
+    const end = new Date(start.getTime() + draggedDurationMinutes * 60 * 1000);
+    return { start, end };
   };
 
   const onDayDrop = (event: DragEvent<HTMLDivElement>, day: Date) => {
@@ -169,11 +191,17 @@ export function WeekBoard({
                 if (!draggingSlotId || !draggedSlot) {
                   return;
                 }
-                const { top } = getDropPosition(event.clientY, event.currentTarget.getBoundingClientRect().top);
+                const { hour, minute, top } = getDropPosition(
+                  event.clientY,
+                  event.currentTarget.getBoundingClientRect().top,
+                );
+                const { start, end } = buildDragPreviewRange(day, hour, minute);
                 setDragPreview({
                   dayKey: dateKey(day),
                   top,
                   height: draggedHeightPx,
+                  start,
+                  end,
                 });
               }}
               onDrop={(event) => onDayDrop(event, day)}
@@ -200,7 +228,11 @@ export function WeekBoard({
                       top: dragPreview.top,
                       height: dragPreview.height,
                     }}
-                  />
+                  >
+                    <span className="tsu-drag-preview-time">{`${timeLabel(dragPreview.start)} - ${timeLabel(
+                      dragPreview.end,
+                    )}`}</span>
+                  </div>
                 )}
                 {daySlots.map((slot) => (
                   (() => {
@@ -220,12 +252,17 @@ export function WeekBoard({
                         }`}
                         draggable={screenMode === "create"}
                         onDragStart={(event) => {
+                          event.dataTransfer.effectAllowed = "move";
+                          event.dataTransfer.setData("text/plain", slot.id);
+                          event.dataTransfer.setDragImage(getTransparentDragImage(), 0, 0);
                           setDraggingSlotId(slot.id);
                           setDragGrabOffsetPx(event.nativeEvent.offsetY);
                           setDragPreview({
                             dayKey: dateKey(day),
                             top: toTopPx(dayBase, slot.start),
                             height: toHeightPx(slot.start, slot.end),
+                            start: slot.start,
+                            end: slot.end,
                           });
                         }}
                         onDragEnd={() => {

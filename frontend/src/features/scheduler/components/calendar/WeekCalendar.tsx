@@ -18,6 +18,7 @@ type Props = {
   onCandidateSlotClickById: (slotId: string) => void;
   onRemoveCandidateSlot: (slotId: string) => void;
   onMoveCandidateSlot: (slotId: string, day: Date, hour: number, minute: number) => void;
+  onShiftCandidateSlotByMinutes: (slotId: string, diffMinutes: number) => void;
   getSlotAnswer?: (slot: CandidateSlot) => AnswerStatus | undefined;
   onSelectSlotAnswer?: (slotId: string, status: AnswerStatus) => void;
 };
@@ -35,6 +36,7 @@ export function WeekCalendar({
   onCandidateSlotClickById,
   onRemoveCandidateSlot,
   onMoveCandidateSlot,
+  onShiftCandidateSlotByMinutes,
   getSlotAnswer,
   onSelectSlotAnswer,
 }: Props) {
@@ -86,6 +88,7 @@ export function WeekCalendar({
             onCandidateSlotClickById={onCandidateSlotClickById}
             onRemoveCandidateSlot={onRemoveCandidateSlot}
             onMoveCandidateSlot={onMoveCandidateSlot}
+            onShiftCandidateSlotByMinutes={onShiftCandidateSlotByMinutes}
             getSlotAnswer={getSlotAnswer}
             onSelectSlotAnswer={onSelectSlotAnswer}
           />

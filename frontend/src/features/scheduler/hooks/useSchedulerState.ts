@@ -66,6 +66,20 @@ export function useSchedulerState() {
     setCandidateSlots((prev) => prev.filter((slot) => slot.id !== slotId));
   };
 
+  const clampSlotStartWithinDay = (day: Date, desiredStart: Date, durationMs: number): Date => {
+    const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0, 0);
+    const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 24, 0, 0, 0);
+    const latestStart = new Date(dayEnd.getTime() - durationMs);
+    const maxStart = latestStart.getTime() < dayStart.getTime() ? dayStart : latestStart;
+    if (desiredStart.getTime() < dayStart.getTime()) {
+      return dayStart;
+    }
+    if (desiredStart.getTime() > maxStart.getTime()) {
+      return maxStart;
+    }
+    return desiredStart;
+  };
+
   const moveCandidateSlot = (slotId: string, day: Date, hour: number, minute: number) => {
     setCandidateSlots((prev) =>
       prev.map((slot) => {
@@ -74,8 +88,6 @@ export function useSchedulerState() {
         }
 
         const durationMs = slot.end.getTime() - slot.start.getTime();
-        const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0, 0);
-        const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 24, 0, 0, 0);
         const desiredStart = new Date(
           day.getFullYear(),
           day.getMonth(),
@@ -85,14 +97,27 @@ export function useSchedulerState() {
           0,
           0,
         );
-        const latestStart = new Date(dayEnd.getTime() - durationMs);
-        const clampedStart =
-          desiredStart.getTime() < dayStart.getTime()
-            ? dayStart
-            : desiredStart.getTime() > latestStart.getTime()
-              ? latestStart
-              : desiredStart;
+        const clampedStart = clampSlotStartWithinDay(day, desiredStart, durationMs);
 
+        return {
+          ...slot,
+          start: clampedStart,
+          end: new Date(clampedStart.getTime() + durationMs),
+        };
+      }),
+    );
+  };
+
+  const shiftCandidateSlotByMinutes = (slotId: string, diffMinutes: number) => {
+    setCandidateSlots((prev) =>
+      prev.map((slot) => {
+        if (slot.id !== slotId) {
+          return slot;
+        }
+
+        const durationMs = slot.end.getTime() - slot.start.getTime();
+        const desiredStart = new Date(slot.start.getTime() + diffMinutes * 60 * 1000);
+        const clampedStart = clampSlotStartWithinDay(slot.start, desiredStart, durationMs);
         return {
           ...slot,
           start: clampedStart,
@@ -122,6 +147,7 @@ export function useSchedulerState() {
     onCandidateSlotClickById,
     removeCandidateSlot,
     moveCandidateSlot,
+    shiftCandidateSlotByMinutes,
     slotSummaryLabel,
   };
 }

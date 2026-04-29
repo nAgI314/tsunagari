@@ -45,6 +45,7 @@ export function SchedulerPage() {
     onCandidateSlotClickById,
     removeCandidateSlot,
     moveCandidateSlot,
+    shiftCandidateSlotByMinutes,
     slotSummaryLabel,
   } = useSchedulerState();
 
@@ -173,12 +174,13 @@ export function SchedulerPage() {
                 googleEvents={isLoggedIn ? googleEvents : SAMPLE_EVENTS}
                 onWeekCellClick={onWeekCellClick}
                 onMonthDayClick={onMonthDayClick}
-                onCandidateSlotClickById={onCandidateSlotClickById}
-                onRemoveCandidateSlot={removeCandidateSlot}
-                onMoveCandidateSlot={moveCandidateSlot}
-              />
-            </div>
-          </div>
+                 onCandidateSlotClickById={onCandidateSlotClickById}
+                 onRemoveCandidateSlot={removeCandidateSlot}
+                 onMoveCandidateSlot={moveCandidateSlot}
+                 onShiftCandidateSlotByMinutes={shiftCandidateSlotByMinutes}
+               />
+             </div>
+           </div>
 
           <aside className="tsu-side">
             <EventInfoPanel

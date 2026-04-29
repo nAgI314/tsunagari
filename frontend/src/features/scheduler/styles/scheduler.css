@@ -408,14 +408,17 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 4px;
+  gap: 2px;
 }
 
 .tsu-slot-time {
+  flex: 1;
+  min-width: 0;
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 .tsu-slot-answer-row {
@@ -442,6 +445,33 @@ body {
   border: none;
   border-radius: 50%;
   font-size: 10px;
+  line-height: 1;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.7);
+  cursor: pointer;
+  padding: 0;
+}
+
+.tsu-slot-shift-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-left: 2px;
+  gap: 2px;
+}
+
+.tsu-slot-shift-controls.vertical {
+  flex-direction: column;
+}
+
+.tsu-slot-shift {
+  width: 17px;
+  height: 17px;
+  min-height: 17px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
   line-height: 1;
   color: inherit;
   background: rgba(255, 255, 255, 0.7);

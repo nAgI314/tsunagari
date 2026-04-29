@@ -3,6 +3,7 @@ import type { DragEvent, MouseEvent } from "react";
 import { HOUR_HEIGHT, HOURS, START_HOUR, WEEKDAY_SHORT } from "../../model/constants";
 import type { AnswerStatus, CandidateSlot, GoogleEvent, ScreenMode } from "../../model/types";
 import { addDays, dateKey, sameDay, timeLabel } from "../../utils/date";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AnswerChoiceButtons } from "../common/AnswerChoiceButtons";
 import { GoogleEventLayer } from "./GoogleEventLayer";
@@ -18,6 +19,7 @@ type Props = {
   onCandidateSlotClickById: (slotId: string) => void;
   onRemoveCandidateSlot: (slotId: string) => void;
   onMoveCandidateSlot: (slotId: string, day: Date, hour: number, minute: number) => void;
+  onShiftCandidateSlotByMinutes: (slotId: string, diffMinutes: number) => void;
   getSlotAnswer?: (slot: CandidateSlot) => AnswerStatus | undefined;
   onSelectSlotAnswer?: (slotId: string, status: AnswerStatus) => void;
 };
@@ -81,6 +83,7 @@ export function WeekBoard({
   onCandidateSlotClickById,
   onRemoveCandidateSlot,
   onMoveCandidateSlot,
+  onShiftCandidateSlotByMinutes,
   getSlotAnswer,
   onSelectSlotAnswer,
 }: Props) {
@@ -203,6 +206,7 @@ export function WeekBoard({
                   (() => {
                     const answer = getSlotAnswer ? getSlotAnswer(slot) : slot.answer;
                     const slotHeight = toHeightPx(slot.start, slot.end);
+                    const useHorizontalShiftButtons = slotHeight < 56;
                     const usePopupAnswerMenu =
                       screenMode === "answer" && !!onSelectSlotAnswer && slotHeight < 44;
 
@@ -250,6 +254,47 @@ export function WeekBoard({
                         )}
                         <div className="tsu-slot-time-row">
                           <span className="tsu-slot-time">{`${timeLabel(slot.start)} - ${timeLabel(slot.end)}`}</span>
+                          {screenMode === "create" && (
+                            <div
+                              className={`tsu-slot-shift-controls ${
+                                useHorizontalShiftButtons ? "horizontal" : "vertical"
+                              }`}
+                              onClick={(event) => event.stopPropagation()}
+                            >
+                              <Button
+                                aria-label="候補を5分前に移動"
+                                className="tsu-slot-shift"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  onShiftCandidateSlotByMinutes(slot.id, -5);
+                                }}
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                }}
+                                type="button"
+                                variant="ghost"
+                              >
+                                <ChevronUp size={12} />
+                              </Button>
+                              <Button
+                                aria-label="候補を5分後に移動"
+                                className="tsu-slot-shift"
+                                onClick={(event) => {
+                                  event.stopPropagation();
+                                  onShiftCandidateSlotByMinutes(slot.id, 5);
+                                }}
+                                onMouseDown={(event) => {
+                                  event.preventDefault();
+                                  event.stopPropagation();
+                                }}
+                                type="button"
+                                variant="ghost"
+                              >
+                                <ChevronDown size={12} />
+                              </Button>
+                            </div>
+                          )}
                           {screenMode === "answer" && usePopupAnswerMenu && (
                             <span className="tsu-status">{slotStatusLabel(answer)}</span>
                           )}

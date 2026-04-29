@@ -257,6 +257,7 @@ export function EventPage({ linkId }: EventPageProps) {
                 onMonthScroll={onMonthScroll}
                 onMoveCandidateSlot={() => {}}
                 onRemoveCandidateSlot={() => {}}
+                onShiftCandidateSlotByMinutes={() => {}}
                 onSelectSlotAnswer={setAnswer}
                 onWeekCellClick={() => {}}
                 onWeekScroll={onWeekScroll}

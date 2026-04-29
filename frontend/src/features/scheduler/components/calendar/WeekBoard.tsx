@@ -136,7 +136,11 @@ export function WeekBoard({
       </div>
       <div className="tsu-week-grid">
         {days.map((day) => {
-          const dayEvents = googleEvents.filter((event) => sameDay(event.start, day));
+          const dayStart = new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, 0, 0);
+          const dayEnd = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1, 0, 0, 0, 0);
+          const dayEvents = googleEvents.filter(
+            (event) => event.start.getTime() < dayEnd.getTime() && event.end.getTime() > dayStart.getTime(),
+          );
           const daySlots = slotByKey
             ? Array.from(slotByKey.values()).filter((slot) => sameDay(slot.start, day))
             : [];
@@ -279,7 +283,7 @@ export function WeekBoard({
                   })()
                 ))}
               </div>
-              {isLoggedIn && <GoogleEventLayer events={dayEvents} />}
+              {isLoggedIn && <GoogleEventLayer events={dayEvents} dayStart={dayStart} dayEnd={dayEnd} />}
             </div>
           );
         })}

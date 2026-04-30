@@ -8,16 +8,18 @@ import { Button } from "@/components/ui/button";
 import { AnswerChoiceButtons } from "../common/AnswerChoiceButtons";
 import { GoogleEventLayer } from "./GoogleEventLayer";
 
-let transparentDragImage: HTMLImageElement | null = null;
-function getTransparentDragImage(): HTMLImageElement {
-  if (transparentDragImage) {
-    return transparentDragImage;
+let transparentDragCanvas: HTMLCanvasElement | null = null;
+function getTransparentDragCanvas(): HTMLCanvasElement {
+  if (transparentDragCanvas) {
+    return transparentDragCanvas;
   }
-  const image = new Image();
-  image.src =
-    "data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
-  transparentDragImage = image;
-  return image;
+  const canvas = document.createElement("canvas");
+  canvas.width = 1;
+  canvas.height = 1;
+  const ctx = canvas.getContext("2d");
+  ctx?.clearRect(0, 0, 1, 1);
+  transparentDragCanvas = canvas;
+  return canvas;
 }
 
 type Props = {
@@ -254,7 +256,7 @@ export function WeekBoard({
                         onDragStart={(event) => {
                           event.dataTransfer.effectAllowed = "move";
                           event.dataTransfer.setData("text/plain", slot.id);
-                          event.dataTransfer.setDragImage(getTransparentDragImage(), 0, 0);
+                          event.dataTransfer.setDragImage(getTransparentDragCanvas(), 0, 0);
                           setDraggingSlotId(slot.id);
                           setDragGrabOffsetPx(event.nativeEvent.offsetY);
                           setDragPreview({

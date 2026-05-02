@@ -467,7 +467,7 @@ body {
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  margin-left: 2px;
+  padding-right: 18px;
   gap: 2px;
 }
 

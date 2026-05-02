@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   HOUR_HEIGHT,
-  WEEK_BOARD_WIDTH,
   WEEK_EXPAND_SIZE,
   WEEK_SCROLL_THRESHOLD,
   WEEK_WINDOW_PADDING,
@@ -14,6 +13,13 @@ type WeekWindow = {
 };
 
 const TIME_AXIS_WIDTH = 54;
+const FALLBACK_WEEK_BOARD_WIDTH = 980;
+
+function getWeekBoardWidth(scroller: HTMLDivElement): number {
+  const board = scroller.querySelector<HTMLElement>(".tsu-week-board");
+  const rawWidth = board?.getBoundingClientRect().width ?? 0;
+  return rawWidth > 0 ? rawWidth : FALLBACK_WEEK_BOARD_WIDTH;
+}
 
 function initialScrollTopForDate(date: Date): number {
   const minutesFromStart = date.getHours() * 60 + date.getMinutes();
@@ -21,8 +27,8 @@ function initialScrollTopForDate(date: Date): number {
   return Math.max(0, top);
 }
 
-function initialScrollLeftForCurrentWeek(): number {
-  return TIME_AXIS_WIDTH + WEEK_WINDOW_PADDING * WEEK_BOARD_WIDTH;
+function initialScrollLeftForCurrentWeek(weekBoardWidth: number): number {
+  return TIME_AXIS_WIDTH + WEEK_WINDOW_PADDING * weekBoardWidth;
 }
 
 export function useInfiniteWeekScroll(baseDate: Date) {
@@ -52,8 +58,9 @@ export function useInfiniteWeekScroll(baseDate: Date) {
     initializedWeekScroll.current = true;
     requestAnimationFrame(() => {
       const previousBehavior = scroller.style.scrollBehavior;
+      const weekBoardWidth = getWeekBoardWidth(scroller);
       scroller.style.scrollBehavior = "auto";
-      scroller.scrollLeft = initialScrollLeftForCurrentWeek();
+      scroller.scrollLeft = initialScrollLeftForCurrentWeek(weekBoardWidth);
       scroller.scrollTop = initialScrollTopForDate(baseDate);
       requestAnimationFrame(() => {
         scroller.style.scrollBehavior = previousBehavior;
@@ -66,6 +73,7 @@ export function useInfiniteWeekScroll(baseDate: Date) {
     if (!scroller) {
       return;
     }
+    const weekBoardWidth = getWeekBoardWidth(scroller);
 
     const nearLeft = scroller.scrollLeft < WEEK_SCROLL_THRESHOLD;
     const nearRight =
@@ -74,12 +82,12 @@ export function useInfiniteWeekScroll(baseDate: Date) {
 
     if (nearLeft) {
       setWeekWindow((prev) => ({ min: prev.min - WEEK_EXPAND_SIZE, max: prev.max }));
-      scroller.scrollLeft += WEEK_EXPAND_SIZE * WEEK_BOARD_WIDTH;
+      scroller.scrollLeft += WEEK_EXPAND_SIZE * weekBoardWidth;
     } else if (nearRight) {
       setWeekWindow((prev) => ({ min: prev.min, max: prev.max + WEEK_EXPAND_SIZE }));
     }
 
-    const rawIndex = Math.round((scroller.scrollLeft - TIME_AXIS_WIDTH) / WEEK_BOARD_WIDTH);
+    const rawIndex = Math.round((scroller.scrollLeft - TIME_AXIS_WIDTH) / weekBoardWidth);
     const offset = rawIndex + weekWindow.min;
     setWeekAnchor(addWeeks(startOfWeek(baseDate), offset));
   };
@@ -95,8 +103,9 @@ export function useInfiniteWeekScroll(baseDate: Date) {
       if (!scroller) {
         return;
       }
+      const weekBoardWidth = getWeekBoardWidth(scroller);
       scroller.scrollTo({
-        left: initialScrollLeftForCurrentWeek(),
+        left: initialScrollLeftForCurrentWeek(weekBoardWidth),
         top: initialScrollTopForDate(baseDate),
         behavior: "smooth",
       });

@@ -1470,14 +1470,24 @@ body {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 
-  .tsu-body:not(.tsu-body-response):not(.tsu-body-results) .tsu-week-head .tsu-day-head:nth-child(n + 6),
-  .tsu-body:not(.tsu-body-response):not(.tsu-body-results) .tsu-week-grid .tsu-day-col:nth-child(n + 6) {
+  .tsu-body:not(.tsu-body-response):not(.tsu-body-results) .tsu-week-head .tsu-day-head:first-child,
+  .tsu-body:not(.tsu-body-response):not(.tsu-body-results) .tsu-week-grid .tsu-day-col:first-child,
+  .tsu-body:not(.tsu-body-response):not(.tsu-body-results) .tsu-week-head .tsu-day-head:last-child,
+  .tsu-body:not(.tsu-body-response):not(.tsu-body-results) .tsu-week-grid .tsu-day-col:last-child {
     display: none;
   }
 
   .tsu-week-scroller {
     height: calc(56px + 15 * 40px);
     overscroll-behavior: auto;
+  }
+
+  .tsu-candidate-slot.popup-status .tsu-slot-time-row {
+    justify-content: center;
+  }
+
+  .tsu-candidate-slot.popup-status .tsu-slot-time {
+    display: none;
   }
 
   .tsu-period-bar {

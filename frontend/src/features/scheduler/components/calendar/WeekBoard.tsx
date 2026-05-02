@@ -251,7 +251,7 @@ export function WeekBoard({
                           screenMode === "answer" && onSelectSlotAnswer && !usePopupAnswerMenu
                             ? "answer-layout"
                             : ""
-                        }`}
+                        }${screenMode === "answer" && usePopupAnswerMenu ? " popup-status" : ""}`}
                         draggable={screenMode === "create"}
                         onDragStart={(event) => {
                           event.dataTransfer.effectAllowed = "move";

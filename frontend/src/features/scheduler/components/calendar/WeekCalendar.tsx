@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from "react";
 import type { RefObject } from "react";
-import { HOURS, START_HOUR } from "../../model/constants";
+import { DEFAULT_VISIBLE_START_HOUR, HOUR_HEIGHT, HOURS, START_HOUR } from "../../model/constants";
 import { addWeeks, startOfWeek } from "../../utils/date";
 import type { AnswerStatus, CandidateSlot, GoogleEvent, ScreenMode } from "../../model/types";
 import { WeekBoard } from "./WeekBoard";
@@ -41,6 +41,25 @@ export function WeekCalendar({
   onSelectSlotAnswer,
 }: Props) {
   const lastScrollTopRef = useRef(0);
+
+  useLayoutEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) {
+      return;
+    }
+
+    if (!window.matchMedia("(max-width: 760px)").matches) {
+      return;
+    }
+
+    if (scroller.scrollTop > 0 || lastScrollTopRef.current > 0) {
+      return;
+    }
+
+    const targetTop = DEFAULT_VISIBLE_START_HOUR * HOUR_HEIGHT;
+    scroller.scrollTop = targetTop;
+    lastScrollTopRef.current = targetTop;
+  }, [scrollerRef]);
 
   useLayoutEffect(() => {
     const scroller = scrollerRef.current;

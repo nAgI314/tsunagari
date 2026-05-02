@@ -35,7 +35,7 @@ export function AnswerChoiceButtons({ value, onSelect, className }: Props) {
           type="button"
           variant="outline"
         >
-          <option.Icon className={`px-[7px] ${option.iconClassName}`} strokeWidth={option.strokeWidth} />
+          <option.Icon className={option.iconClassName} strokeWidth={option.strokeWidth} />
         </Button>
       ))}
     </div>

@@ -402,6 +402,7 @@ body {
   color: #0c4c3f;
   pointer-events: auto;
   cursor: grab;
+  overflow: hidden;
 }
 
 .tsu-candidate-slot.answer-layout {
@@ -509,11 +510,15 @@ body {
 }
 
 .tsu-status {
+  flex-shrink: 0;
   min-width: 35px;
   font-size: 9px;
   padding: 1px 4px;
   border-radius: 3px;
   background: rgba(255, 255, 255, 0.75);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tsu-answer-choices {
@@ -528,6 +533,7 @@ body {
   border-radius: 8px;
   overflow: hidden;
   background: var(--tsu-panel);
+  margin: 0 20px;
 }
 
 .tsu-answer-choice {
@@ -541,6 +547,9 @@ body {
   font-size: 10px;
   line-height: 1;
   color: var(--tsu-subtext);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .tsu-answer-choice:last-child {
@@ -732,8 +741,9 @@ body {
   display: flex;
   flex-direction: column;
   background: var(--tsu-bg);
-  min-height: 0;
-  overflow: hidden;
+  min-height: 600px;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .tsu-panel {
@@ -1327,10 +1337,10 @@ body {
 }
 
 .tsu-candidate-scroll-panel {
-  flex: 1;
-  min-height: 0;
+  flex: 1 1 220px;
   display: flex;
   flex-direction: column;
+  min-height: 220px;
 }
 
 .tsu-candidate-scroll-panel .tsu-slot-list {
@@ -1417,6 +1427,8 @@ body {
 @media (max-width: 1100px) {
   .tsu-body {
     grid-template-columns: 1fr;
+    height: auto;
+    overflow: visible;
   }
 
   .tsu-calendar-area {
@@ -1427,6 +1439,8 @@ body {
 
   .tsu-side {
     max-height: none;
+    overflow-x: hidden;
+    overflow-y: visible;
   }
 }
 
@@ -1446,7 +1460,24 @@ body {
   }
 
   .tsu-week-board {
-    min-width: 880px;
+    flex: 0 0 calc(100vw - 54px);
+    min-width: calc(100vw - 54px);
+    width: calc(100vw - 54px);
+  }
+
+  .tsu-body:not(.tsu-body-response):not(.tsu-body-results) .tsu-week-head,
+  .tsu-body:not(.tsu-body-response):not(.tsu-body-results) .tsu-week-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .tsu-body:not(.tsu-body-response):not(.tsu-body-results) .tsu-week-head .tsu-day-head:nth-child(n + 6),
+  .tsu-body:not(.tsu-body-response):not(.tsu-body-results) .tsu-week-grid .tsu-day-col:nth-child(n + 6) {
+    display: none;
+  }
+
+  .tsu-week-scroller {
+    height: calc(56px + 15 * 40px);
+    overscroll-behavior: auto;
   }
 
   .tsu-period-bar {

@@ -48,32 +48,72 @@ export function PrivacyPolicyPage() {
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold  ">
+              <h2 className="text-lg font-semibold">
                 3. 第三者提供
               </h2>
               <p>
-                本サービスは、以下の場合を除き、個人情報を第三者に提供しません。
+                本サービスは、以下の場合を除き、個人情報およびGoogleユーザーデータを第三者に提供しません。
               </p>
               <ul className="list-disc pl-5 space-y-1">
                 <li>本人の同意がある場合</li>
                 <li>法令に基づく場合</li>
                 <li>人の生命・身体・財産の保護に必要な場合</li>
               </ul>
+              <p>
+                なお、本サービスはGoogleアカウントによるログイン・Googleカレンダー連携を通じて取得したデータを、
+                第三者に販売・貸与・共有することはありません。また、本サービスにおけるGoogleユーザーデータの利用は、
+                サービスの提供に直接必要な目的に限定されます。
+              </p>
+              <p>
+                サービス運営上、以下の業務委託先（インフラ事業者等）にデータが処理される場合があります。
+                これらの事業者は、本サービスの提供に必要な範囲においてのみデータを取り扱い、
+                その他の目的での利用は禁止されています。
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>ホスティング・インフラ事業者（例: Vercel, Supabase 等）</li>
+                <li>その他、サービス運営に必要なシステム事業者</li>
+              </ul>
             </section>
 
             <section className="space-y-4">
-              <h2 className="text-lg font-semibold  ">
+              <h2 className="text-lg font-semibold">
                 4. 外部サービスの利用
               </h2>
               <p>
-                本サービスでは、認証および機能提供のために外部サービスを利用しています。
+                本サービスでは、認証および機能提供のために以下の外部サービスを利用しています。
+                各サービスで取得するデータ・利用目的・第三者提供の有無は以下のとおりです。
               </p>
-              <ul className="list-disc pl-5 space-y-1">
-                <li>Googleログイン（OAuth認証）</li>
-                <li>Googleカレンダー連携（ユーザー許可時のみ）</li>
-              </ul>
+
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-base">Googleログイン（OAuth 2.0認証）</h3>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li><span className="font-medium">取得データ:</span> ユーザーID、メールアドレス、プロフィール情報（名前・アイコン）</li>
+                    <li><span className="font-medium">利用目的:</span> ユーザー認証およびアカウント管理</li>
+                    <li><span className="font-medium">第三者提供:</span> なし（上記インフラ事業者による処理を除く）</li>
+                  </ul>
+                </div>
+
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-base">Googleカレンダー連携</h3>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li><span className="font-medium">取得データ:</span> カレンダーの予定情報（タイトル、日時等）</li>
+                    <li><span className="font-medium">利用目的:</span> 日程調整機能における空き時間の確認・表示</li>
+                    <li><span className="font-medium">取得条件:</span> ユーザーが明示的に許可した場合のみ</li>
+                    <li><span className="font-medium">第三者提供:</span> なし（上記インフラ事業者による処理を除く）</li>
+                  </ul>
+                </div>
+              </div>
+
               <p>
-                これらのサービスは各提供元のプライバシーポリシーに基づいてデータを取り扱います。
+                本サービスにおけるGoogle APIから取得したデータの利用は、
+                <a href="https://developers.google.com/terms/api-services-user-data-policy" className="underline underline-offset-4 hover:opacity-70" target="_blank" rel="noopener noreferrer">
+                  Google API サービスのユーザーデータに関するポリシー
+                </a>
+                （Limited Use要件を含む）に準拠します。
+              </p>
+              <p>
+                各サービスは、それぞれのプライバシーポリシーに基づいてデータを取り扱います。
               </p>
             </section>
 

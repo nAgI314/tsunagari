@@ -401,7 +401,6 @@ body {
   color: #0c4c3f;
   pointer-events: auto;
   cursor: grab;
-  overflow: hidden;
 }
 
 .tsu-candidate-slot.answer-layout {
@@ -1478,6 +1477,17 @@ body {
   .tsu-week-scroller {
     height: calc(56px + 15 * 40px);
     overscroll-behavior: auto;
+  }
+
+  .tsu-candidate-slot {
+    overflow: hidden;
+  }
+
+  .tsu-answer-popup {
+    left: 2px;
+    right: 2px;
+    top: 2px;
+    display: none;
   }
 
   .tsu-candidate-slot.popup-status .tsu-slot-time-row {

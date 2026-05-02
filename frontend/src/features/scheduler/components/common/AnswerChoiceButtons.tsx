@@ -31,6 +31,7 @@ export function AnswerChoiceButtons({ value, onSelect, className }: Props) {
           onClick={(event) => {
             event.stopPropagation();
             onSelect(option.status);
+            event.currentTarget.blur();
           }}
           type="button"
           variant="outline"

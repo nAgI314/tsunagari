@@ -1,5 +1,5 @@
-import { useState } from "react";
-import type { DragEvent, MouseEvent } from "react";
+import { useEffect, useState } from "react";
+import type { DragEvent, MouseEvent as ReactMouseEvent } from "react";
 import { HOUR_HEIGHT, HOURS, START_HOUR, WEEKDAY_SHORT } from "../../model/constants";
 import type { AnswerStatus, CandidateSlot, GoogleEvent, ScreenMode } from "../../model/types";
 import { addDays, dateKey, sameDay, timeLabel } from "../../utils/date";
@@ -80,7 +80,7 @@ function toHeightPx(start: Date, end: Date): number {
   return Math.max(16, (durationMinutes / 60) * HOUR_HEIGHT - 7);
 }
 
-function minuteFromClick(event: MouseEvent<HTMLButtonElement>): number {
+function minuteFromClick(event: ReactMouseEvent<HTMLButtonElement>): number {
   const offsetY = event.nativeEvent.offsetY;
   const raw = Math.floor((offsetY / HOUR_HEIGHT) * 12) * 5;
   return Math.max(0, Math.min(55, raw));
@@ -119,6 +119,43 @@ export function WeekBoard({
     ? (draggedSlot.end.getTime() - draggedSlot.start.getTime()) / (1000 * 60)
     : 0;
   const draggedHeightPx = draggedSlot ? toHeightPx(draggedSlot.start, draggedSlot.end) : 0;
+
+  useEffect(() => {
+    if (screenMode !== "answer" || !onSelectSlotAnswer) {
+      return;
+    }
+
+    const maybeClosePopup = (target: EventTarget | null) => {
+      const element = target as HTMLElement | null;
+      if (!element) {
+        return;
+      }
+
+      if (element.closest(".tsu-candidate-slot")) {
+        return;
+      }
+
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && active.closest(".tsu-candidate-slot")) {
+        active.blur();
+      }
+    };
+
+    const onMouseDown = (event: globalThis.MouseEvent) => {
+      maybeClosePopup(event.target);
+    };
+
+    const onTouchStart = (event: globalThis.TouchEvent) => {
+      maybeClosePopup(event.target);
+    };
+
+    document.addEventListener("mousedown", onMouseDown);
+    document.addEventListener("touchstart", onTouchStart, { passive: true });
+    return () => {
+      document.removeEventListener("mousedown", onMouseDown);
+      document.removeEventListener("touchstart", onTouchStart);
+    };
+  }, [onSelectSlotAnswer, screenMode]);
 
   const getDropPosition = (clientY: number, columnTop: number) => {
     const offsetFromTop = clientY - columnTop - dragGrabOffsetPx;

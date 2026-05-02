@@ -397,7 +397,6 @@ body {
   justify-content: space-between;
   align-items: center;
   gap: 6px;
-  padding: 2px 20px 2px 4px;
   font-size: 10px;
   color: #0c4c3f;
   pointer-events: auto;
@@ -523,7 +522,7 @@ body {
 
 .tsu-answer-choices {
   width: 100%;
-  min-width: 0;
+  min-width: 140px;
   box-sizing: border-box;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -533,7 +532,6 @@ body {
   border-radius: 8px;
   overflow: hidden;
   background: var(--tsu-panel);
-  margin: 0 20px;
 }
 
 .tsu-answer-choice {

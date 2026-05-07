@@ -187,6 +187,7 @@ export function EventPage({ linkId }: EventPageProps) {
         })),
       });
       setSubmitMessage("回答を送信しました。");
+      window.location.assign(`/event/${encodeURIComponent(linkId)}/results`);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "回答の送信に失敗しました。");
     } finally {

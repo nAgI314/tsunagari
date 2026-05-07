@@ -533,6 +533,11 @@ body {
   background: var(--tsu-panel);
 }
 
+.tsu-candidate-slot.answer-layout .tsu-answer-choices {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .tsu-answer-choice {
   width: 100%;
   min-width: 0;

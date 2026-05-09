@@ -60,11 +60,11 @@ services:
 
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`${APP_DOMAIN:-localhost}`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.frontend.priority=10"
-      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      - "traefik.http.routers.tsunagari.rule=Host(`${APP_DOMAIN:-localhost}`)"
+      - "traefik.http.routers.tsunagari.entrypoints=websecure"
+      - "traefik.http.routers.tsunagari.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.tsunagari.priority=10"
+      - "traefik.http.services.tsunagari.loadbalancer.server.port=80"
       - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-traefik-network}"
 
 volumes:

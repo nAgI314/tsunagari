@@ -15,6 +15,7 @@ import type { AnswerStatus, CandidateSlot, ViewMode } from "@/features/scheduler
 import { SAMPLE_EVENTS } from "@/features/scheduler/model/sampleData";
 import { formatMonthLabel, formatWeekPeriod, timeLabel } from "@/features/scheduler/utils/date";
 import { shiftAnswer } from "@/features/scheduler/utils/slot";
+import { usePageTitle } from "@/features/scheduler/hooks/usePageTitle";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { EventAnswerTopbar } from "../components/EventAnswerTopbar";
 import { ResponseInfoPanel } from "../components/ResponseInfoPanel";
@@ -220,6 +221,8 @@ export function EventPage({ linkId }: EventPageProps) {
   const hasAnsweredAll = event ? event.candidates.every((candidate) => answerByCandidateId.has(candidate.id)) : false;
   const responseDeadlineLabel = "回答期限: 未設定";
   const activeGoogleEvents = isLoggedIn ? filteredEvents : [];
+
+  usePageTitle(event?.title);
 
   const onAutoFillByGoogleCalendar = () => {
     setSubmitError(null);

@@ -3,6 +3,7 @@ import type { ScheduleEvent, ScheduleResponse } from "../../../../../shared/src"
 import { EventNotFoundError, getEventByLinkId, listEventResponsesByLinkId } from "@/api";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { timeLabel } from "@/features/scheduler/utils/date";
+import { usePageTitle } from "@/features/scheduler/hooks/usePageTitle";
 import { SiteFooter } from "@/app/SiteFooter";
 import { Circle, Triangle, X } from "lucide-react";
 
@@ -77,6 +78,8 @@ export function EventResultsPage({ linkId }: Props) {
       active = false;
     };
   }, [linkId]);
+
+  usePageTitle(event?.title);
 
   const responders = useMemo(() => {
     const seen = new Set<string>();

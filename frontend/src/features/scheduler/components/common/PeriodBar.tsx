@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import type { CalendarInfo } from "../../hooks/useGoogleCalendarEvents";
-import { Calendar, Check } from "lucide-react";
+import { Calendar, Check, Loader2 } from "lucide-react";
 
 type Props = {
   label: string;
@@ -8,6 +8,7 @@ type Props = {
   onJumpToToday: () => void;
   calendars: CalendarInfo[];
   onToggleCalendar: (id: string) => void;
+  loadingCalendars: boolean;
 };
 
 export function PeriodBar({
@@ -16,6 +17,7 @@ export function PeriodBar({
   onJumpToToday,
   calendars,
   onToggleCalendar,
+  loadingCalendars,
 }: Props) {
   const [open, setOpen] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -31,6 +33,8 @@ export function PeriodBar({
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
+  const showCalendarButton = loadingCalendars || calendars.length > 0;
+
   return (
     <div className="tsu-period-bar">
       <div className="tsu-period-main">
@@ -38,7 +42,7 @@ export function PeriodBar({
         <span>{hint}</span>
       </div>
       <div className="tsu-period-actions" ref={popoverRef}>
-        {calendars.length > 0 && (
+        {showCalendarButton && (
           <div className="tsu-calendar-picker-wrap">
             <button
               className={`tsu-today-button tsu-calendar-picker-trigger ${open ? "active" : ""}`}
@@ -50,19 +54,26 @@ export function PeriodBar({
             </button>
             {open && (
               <div className="tsu-calendar-picker-popover">
-                {calendars.map((calendar) => (
-                  <button
-                    key={calendar.id}
-                    className={`tsu-calendar-picker-item ${calendar.selected ? "selected" : ""}`}
-                    onClick={() => onToggleCalendar(calendar.id)}
-                    type="button"
-                  >
-                    <span className="tsu-calendar-picker-checkbox">
-                      {calendar.selected && <Check size={11} strokeWidth={3} />}
-                    </span>
-                    <span className="tsu-calendar-picker-name">{calendar.name}</span>
-                  </button>
-                ))}
+                {loadingCalendars && calendars.length === 0 ? (
+                  <div className="tsu-calendar-picker-loading">
+                    <Loader2 size={16} className="tsu-calendar-picker-spinner" />
+                    <span>カレンダーをロード中</span>
+                  </div>
+                ) : (
+                  calendars.map((calendar) => (
+                    <button
+                      key={calendar.id}
+                      className={`tsu-calendar-picker-item ${calendar.selected ? "selected" : ""}`}
+                      onClick={() => onToggleCalendar(calendar.id)}
+                      type="button"
+                    >
+                      <span className="tsu-calendar-picker-checkbox">
+                        {calendar.selected && <Check size={11} strokeWidth={3} />}
+                      </span>
+                      <span className="tsu-calendar-picker-name">{calendar.name}</span>
+                    </button>
+                  ))
+                )}
               </div>
             )}
           </div>

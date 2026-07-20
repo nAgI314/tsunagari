@@ -62,7 +62,7 @@ export function EventPage({ linkId }: EventPageProps) {
   } = useInfiniteWeekScroll(now);
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
-  const { events: googleEvents, calendars, setCalendars } = useGoogleCalendarEvents(
+  const { events: googleEvents, calendars, setCalendars, loading: loadingCalendars } = useGoogleCalendarEvents(
     accessToken,
     isLoggedIn,
     () => {
@@ -345,6 +345,7 @@ export function EventPage({ linkId }: EventPageProps) {
                   : "上下スクロールで月を移動"
               }
               label={viewMode === "week" ? formatWeekPeriod(currentWeekStart) : formatMonthLabel(currentMonthStart)}
+              loadingCalendars={loadingCalendars}
               onJumpToToday={viewMode === "week" ? jumpToCurrentWeek : jumpToCurrentMonth}
               onToggleCalendar={(id) => {
                 setCalendars((prev) =>

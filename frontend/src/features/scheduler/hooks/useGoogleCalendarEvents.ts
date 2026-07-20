@@ -60,6 +60,7 @@ export function useGoogleCalendarEvents(
 ) {
   const [events, setEvents] = useState<GoogleEvent[]>([]);
   const [calendars, setCalendars] = useState<CalendarInfo[]>([]);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const onAuthErrorRef = useRef(onAuthError);
   onAuthErrorRef.current = onAuthError;
@@ -68,6 +69,7 @@ export function useGoogleCalendarEvents(
     if (!enabled || !accessToken) {
       setEvents([]);
       setCalendars([]);
+      setLoading(false);
       setError(null);
       return;
     }
@@ -75,6 +77,7 @@ export function useGoogleCalendarEvents(
     if (isTokenExpiringSoon()) {
       setEvents([]);
       setCalendars([]);
+      setLoading(false);
       setError(null);
       onAuthErrorRef.current?.();
       return;
@@ -82,6 +85,7 @@ export function useGoogleCalendarEvents(
 
     const controller = new AbortController();
     const loadEvents = async () => {
+      setLoading(true);
       try {
         setError(null);
         const now = new Date();
@@ -190,6 +194,8 @@ export function useGoogleCalendarEvents(
           return;
         }
         setError(err instanceof Error ? err.message : "Googleカレンダーの取得に失敗しました。");
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -206,5 +212,5 @@ export function useGoogleCalendarEvents(
     window.localStorage.setItem(CALENDAR_VISIBILITY_KEY, JSON.stringify(record));
   }, [calendars]);
 
-  return { events, calendars, setCalendars, error };
+  return { events, calendars, setCalendars, loading, error };
 }

@@ -70,7 +70,7 @@ export function SchedulerPage() {
   } = useInfiniteWeekScroll(now);
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
-  const { events: googleEvents, calendars, setCalendars } = useGoogleCalendarEvents(
+  const { events: googleEvents, calendars, setCalendars, loading: loadingCalendars } = useGoogleCalendarEvents(
     accessToken,
     isLoggedIn,
     () => {
@@ -201,6 +201,7 @@ export function SchedulerPage() {
                   ? formatWeekPeriod(currentWeekStart)
                   : formatMonthLabel(currentMonthStart)
               }
+              loadingCalendars={loadingCalendars}
               onJumpToToday={viewMode === "week" ? jumpToCurrentWeek : jumpToCurrentMonth}
               onToggleCalendar={(id) => {
                 setCalendars((prev) =>

@@ -72,24 +72,62 @@ export function useGoogleCalendarEvents(
           timeMax,
           singleEvents: "true",
           orderBy: "startTime",
-          maxResults: "200",
+          maxResults: "250",
         });
-        const response = await fetch(
-          `https://www.googleapis.com/calendar/v3/calendars/primary/events?${params.toString()}`,
+
+        // 1. ユーザーの全カレンダーを取得
+        const listResponse = await fetch(
+          `https://www.googleapis.com/calendar/v3/users/me/calendarList?${new URLSearchParams({ maxResults: "250" }).toString()}`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
             signal: controller.signal,
           },
         );
-        if (!response.ok) {
-          if (response.status === 401) {
+        if (!listResponse.ok) {
+          if (listResponse.status === 401) {
             onAuthErrorRef.current?.();
             throw new Error("Googleの認証が切れました。再ログインします。");
           }
           throw new Error("Googleカレンダーの取得に失敗しました。");
         }
-        const json = (await response.json()) as CalendarEventsResponse;
-        const mapped: GoogleEvent[] = (json.items ?? [])
+        const listJson = (await listResponse.json()) as { items?: { id?: string }[] };
+        const calendarIds = (listJson.items ?? [])
+          .map((item) => item.id)
+          .filter((id): id is string => !!id);
+
+        // 2. 各カレンダーのイベントを並列取得
+        const eventResponses = await Promise.all(
+          calendarIds.map(async (calendarId) => {
+            try {
+              const response = await fetch(
+                `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`,
+                {
+                  headers: { Authorization: `Bearer ${accessToken}` },
+                  signal: controller.signal,
+                },
+              );
+              if (!response.ok) {
+                return { items: [] as CalendarEventItem[] };
+              }
+              const json = (await response.json()) as CalendarEventsResponse;
+              return json;
+            } catch {
+              return { items: [] as CalendarEventItem[] };
+            }
+          }),
+        );
+
+        const allItems = eventResponses.flatMap((res) => res.items ?? []);
+
+        // 3. 重複排除（同じイベントが複数カレンダーに含まれる場合がある）
+        const seenIds = new Set<string>();
+        const uniqueItems = allItems.filter((item) => {
+          if (!item.id || seenIds.has(item.id)) return false;
+          seenIds.add(item.id);
+          return true;
+        });
+
+        const mapped: GoogleEvent[] = uniqueItems
           .map((item) => {
             const startRaw = item.start?.dateTime ?? item.start?.date;
             const endRaw = item.end?.dateTime ?? item.end?.date;

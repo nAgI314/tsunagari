@@ -1,4 +1,7 @@
+import "dotenv/config"
 import express from "express"
+import session from "express-session"
+import connectPgSimple from "connect-pg-simple"
 import { type ScheduleEvent, type ScheduleResponse } from "../shared/src/index"
 import AppDataSource from "./src/data-source"
 import { type UserRepositoryLike } from "./src/routes/dev-users/common"
@@ -13,10 +16,49 @@ import { registerListEventResponsesRoute } from "./src/routes/events/get-event-r
 import { registerCreateEventRoute } from "./src/routes/events/post-event"
 import { registerCreateEventResponseRoute } from "./src/routes/events/post-event-response"
 import { registerUpdateEventRoute } from "./src/routes/events/put-event"
+import { registerAuthRoutes } from "./src/routes/auth"
 
 export const createApp = (userRepository?: UserRepositoryLike) => {
   const app = express()
+
+  app.set("trust proxy", 1)
+
   app.use(express.json())
+
+  const sessionSecret = process.env.SESSION_SECRET
+  if (sessionSecret) {
+    let store: session.Store | undefined
+    if (process.env.SESSION_STORE !== "memory") {
+      const PgSession = connectPgSimple(session)
+      store = new PgSession({
+        conObject: {
+          host: process.env.DB_HOST,
+          port: parseInt(process.env.DB_PORT || "5432", 10),
+          user: process.env.DB_USERNAME,
+          password: process.env.DB_PASSWORD,
+          database: process.env.DB_NAME,
+        },
+        tableName: "session",
+        createTableIfMissing: false,
+      })
+    }
+    app.use(
+      session({
+        store,
+        secret: sessionSecret,
+        resave: false,
+        saveUninitialized: false,
+        name: "tsunagari.sid",
+        cookie: {
+          secure: process.env.NODE_ENV === "production",
+          httpOnly: true,
+          sameSite: "lax",
+          maxAge: 30 * 24 * 60 * 60 * 1000,
+        },
+      })
+    )
+  }
+
   const isDevApiEnabled =
     process.env.NODE_ENV === "development" && process.env.DEV_API_ENABLED === "true"
   const inMemoryEvents = new Map<string, ScheduleEvent>()
@@ -25,6 +67,8 @@ export const createApp = (userRepository?: UserRepositoryLike) => {
   app.get("/health", (_req, res) => {
     res.json({ status: "ok" })
   })
+
+  registerAuthRoutes(app, userRepository)
 
   registerCreateEventRoute(app, inMemoryEvents)
   registerGetEventByLinkRoute(app, inMemoryEvents)

@@ -7,6 +7,8 @@
   "scripts": {
     "build": "bun run typecheck && bun build index.ts --outdir dist --target bun",
     "dev": "bun --watch index.ts",
+    "db:dev:up": "docker compose -f ../docker-compose.dev.yml up -d",
+    "db:dev:down": "docker compose -f ../docker-compose.dev.yml down",
     "db:migration:fix-latest": "bun scripts/fix-latest-migration.ts",
     "db:migration:generate": "bun scripts/generate-migration.ts",
     "db:migration:run": "bunx --bun typeorm migration:run -d src/data-source.ts",
@@ -24,9 +26,13 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@types/express-session": "^1.19.0",
     "@types/node": "^25.6.0",
+    "connect-pg-simple": "^10.0.0",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "google-auth-library": "^10.9.0",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
     "supertest": "^7.1.1",

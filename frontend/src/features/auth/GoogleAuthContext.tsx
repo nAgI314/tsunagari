@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import type { ReactNode } from "react";
+import { getMe, logoutAuth, verifyAuth } from "@/api";
 
 type TokenResponse = {
   access_token: string;
@@ -32,36 +33,61 @@ type ProviderProps = {
   children: ReactNode;
 };
 
+type StoredAuth = {
+  accessToken: string;
+  expiresAt: number;
+  hasPrompted: boolean;
+};
+
 export function GoogleAuthProvider({ children }: ProviderProps) {
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID?.trim();
   const [isReady, setIsReady] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [userName, setUserName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const hasPromptedRef = useRef(false);
   const tokenClientRef = useRef<TokenClient | null>(null);
 
+  // Restore session from backend on mount
   useEffect(() => {
-    const raw = window.sessionStorage.getItem(STORAGE_KEY);
+    const restore = async () => {
+      try {
+        const me = await getMe();
+        if (me?.user) {
+          setIsLoggedIn(true);
+          setUserName(me.user.name ?? me.user.email ?? "Googleユーザー");
+        }
+      } catch {
+        // silently ignore
+      }
+    };
+    void restore();
+  }, []);
+
+  // Restore Google access token from localStorage (for Calendar API)
+  useEffect(() => {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       return;
     }
     try {
-      const parsed = JSON.parse(raw) as { accessToken: string; expiresAt: number };
+      const parsed = JSON.parse(raw) as StoredAuth;
+      if (parsed.hasPrompted) {
+        hasPromptedRef.current = true;
+      }
       if (parsed.accessToken && parsed.expiresAt > Date.now()) {
         setAccessToken(parsed.accessToken);
-        hasPromptedRef.current = true;
-      } else {
-        window.sessionStorage.removeItem(STORAGE_KEY);
       }
     } catch {
-      window.sessionStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(STORAGE_KEY);
     }
   }, []);
 
+  // Fetch Google profile when accessToken changes
   useEffect(() => {
     if (!accessToken) {
-      setUserName(null);
+      setUserName((prev) => (isLoggedIn ? prev : null));
       return;
     }
     const controller = new AbortController();
@@ -85,8 +111,9 @@ export function GoogleAuthProvider({ children }: ProviderProps) {
     };
     void loadProfile();
     return () => controller.abort();
-  }, [accessToken]);
+  }, [accessToken, isLoggedIn]);
 
+  // Load Google Identity Services script
   useEffect(() => {
     if (!clientId) {
       setError("VITE_GOOGLE_CLIENT_ID が未設定です。");
@@ -118,10 +145,21 @@ export function GoogleAuthProvider({ children }: ProviderProps) {
           const expiresAt = Date.now() + tokenResponse.expires_in * 1000;
           setAccessToken(tokenResponse.access_token);
           setError(null);
-          window.sessionStorage.setItem(
+          window.localStorage.setItem(
             STORAGE_KEY,
-            JSON.stringify({ accessToken: tokenResponse.access_token, expiresAt }),
+            JSON.stringify({ accessToken: tokenResponse.access_token, expiresAt, hasPrompted: true }),
           );
+
+          // Verify with backend to create session
+          void verifyAuth(tokenResponse.access_token)
+            .then((res) => {
+              setIsLoggedIn(true);
+              setUserName(res.user.name ?? res.user.email ?? "Googleユーザー");
+            })
+            .catch((err: Error) => {
+              setError(err.message ?? "セッション作成に失敗しました。");
+              setIsLoggedIn(false);
+            });
         },
       }) as TokenClient;
       setIsReady(true);
@@ -156,7 +194,11 @@ export function GoogleAuthProvider({ children }: ProviderProps) {
     setAccessToken(null);
     setUserName(null);
     setError(null);
-    window.sessionStorage.removeItem(STORAGE_KEY);
+    setIsLoggedIn(false);
+    window.localStorage.removeItem(STORAGE_KEY);
+
+    void logoutAuth().catch(() => undefined);
+
     if (token && window.google?.accounts?.oauth2?.revoke) {
       window.google.accounts.oauth2.revoke(token, () => undefined);
     }
@@ -165,14 +207,14 @@ export function GoogleAuthProvider({ children }: ProviderProps) {
   const value = useMemo<GoogleAuthContextValue>(
     () => ({
       isReady,
-      isLoggedIn: !!accessToken,
+      isLoggedIn: !!isLoggedIn,
       accessToken,
       userName,
       error,
       login,
       logout,
     }),
-    [accessToken, error, isReady, userName],
+    [isLoggedIn, accessToken, error, isReady, userName],
   );
 
   return <GoogleAuthContext.Provider value={value}>{children}</GoogleAuthContext.Provider>;

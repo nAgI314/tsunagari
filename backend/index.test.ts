@@ -1,7 +1,17 @@
-import { afterEach, beforeEach, describe, expect, test } from "bun:test"
+import { afterEach, beforeEach, describe, expect, mock, test } from "bun:test"
 import request from "supertest"
 import { createApp } from "./index"
 import User from "./src/entities/User"
+
+const originalFetch = globalThis.fetch
+
+const mockGoogleUserInfo = (payload: { sub: string; email: string; name?: string }) => {
+  globalThis.fetch = mock(() =>
+    Promise.resolve(
+      new Response(JSON.stringify(payload), { status: 200, headers: { "content-type": "application/json" } })
+    )
+  ) as unknown as typeof fetch
+}
 
 const createUserRepositoryMock = () => {
   const users = new Map<string, User>()
@@ -19,8 +29,14 @@ const createUserRepositoryMock = () => {
       users.set(user.id, user)
       return user
     },
-    async findOneBy(where: { id: string }) {
-      return users.get(where.id) ?? null
+    async findOneBy(where: Record<string, unknown>) {
+      if (typeof where.id === "string") {
+        return users.get(where.id) ?? null
+      }
+      if (typeof where.googleId === "string") {
+        return Array.from(users.values()).find((u) => u.googleId === where.googleId) ?? null
+      }
+      return null
     },
     async find() {
       return Array.from(users.values())
@@ -35,15 +51,21 @@ const createUserRepositoryMock = () => {
 describe("backend api", () => {
   const originalNodeEnv = process.env.NODE_ENV
   const originalDevApiEnabled = process.env.DEV_API_ENABLED
+  const originalSessionSecret = process.env.SESSION_SECRET
 
   beforeEach(() => {
     process.env.NODE_ENV = "development"
     process.env.DEV_API_ENABLED = "true"
+    process.env.SESSION_SECRET = "test-session-secret"
+    process.env.SESSION_STORE = "memory"
   })
 
   afterEach(() => {
     process.env.NODE_ENV = originalNodeEnv
     process.env.DEV_API_ENABLED = originalDevApiEnabled
+    process.env.SESSION_SECRET = originalSessionSecret
+    delete process.env.SESSION_STORE
+    globalThis.fetch = originalFetch
   })
 
   test("GET /health returns ok", async () => {
@@ -144,7 +166,7 @@ describe("backend api", () => {
         })),
       })
 
-    expect(response.status).toBe(201)
+    expect(response.status).toBe(200)
     expect(response.body.response.responderName).toBe("Hanako")
     expect(response.body.response.answers).toHaveLength(2)
   })
@@ -166,7 +188,7 @@ describe("backend api", () => {
         responderName: "Hanako",
         answers: [{ candidateId: created.body.event.candidates[0].id, status: "ok" }],
       })
-      .expect(201)
+      .expect(200)
 
     const listed = await request(app).get(`/api/events/by-link/${created.body.event.linkId}/responses`)
     expect(listed.status).toBe(200)
@@ -230,5 +252,44 @@ describe("backend api", () => {
     const app = createApp(createUserRepositoryMock())
     const res = await request(app).get("/api/dev/users")
     expect(res.status).toBe(404)
+  })
+
+  test("POST /api/auth/verify creates session and returns user", async () => {
+    mockGoogleUserInfo({ sub: "google-999", email: "auth@example.com", name: "Auth User" })
+    const app = createApp(createUserRepositoryMock())
+    const res = await request(app)
+      .post("/api/auth/verify")
+      .send({ accessToken: "dummy-google-token" })
+    expect(res.status).toBe(200)
+    expect(res.body.user.googleId).toBe("google-999")
+    expect(res.body.user.email).toBe("auth@example.com")
+    expect(res.body.user.name).toBe("Auth User")
+  })
+
+  test("GET /api/auth/me returns user when session exists", async () => {
+    mockGoogleUserInfo({ sub: "google-998", email: "me@example.com" })
+    const app = createApp(createUserRepositoryMock())
+    const agent = request.agent(app)
+    await agent.post("/api/auth/verify").send({ accessToken: "dummy" })
+    const me = await agent.get("/api/auth/me")
+    expect(me.status).toBe(200)
+    expect(me.body.user.email).toBe("me@example.com")
+  })
+
+  test("GET /api/auth/me returns 401 when no session", async () => {
+    const app = createApp(createUserRepositoryMock())
+    const res = await request(app).get("/api/auth/me")
+    expect(res.status).toBe(401)
+  })
+
+  test("POST /api/auth/logout destroys session", async () => {
+    mockGoogleUserInfo({ sub: "google-997", email: "logout@example.com" })
+    const app = createApp(createUserRepositoryMock())
+    const agent = request.agent(app)
+    await agent.post("/api/auth/verify").send({ accessToken: "dummy" })
+    const logout = await agent.post("/api/auth/logout")
+    expect(logout.status).toBe(200)
+    const me = await agent.get("/api/auth/me")
+    expect(me.status).toBe(401)
   })
 })

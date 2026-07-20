@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/app/AppShell";
 import { createEvent } from "@/api";
 import { useGoogleAuth } from "@/features/auth/GoogleAuthContext";
+import { LoginPreviewDialog } from "@/features/auth/LoginPreviewDialog";
 import { Button } from "@/components/ui/button";
 import { CalendarViewport } from "../components/calendar/CalendarViewport";
 import { PeriodBar } from "../components/common/PeriodBar";
@@ -27,8 +28,19 @@ export function SchedulerPage() {
   const [createdLinkId, setCreatedLinkId] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showLoginPreview, setShowLoginPreview] = useState(false);
+  const loginPreviewDismissed = useRef(false);
   const appDomain = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
   const { isLoggedIn, login, logout, accessToken } = useGoogleAuth();
+
+  useEffect(() => {
+    if (!isLoggedIn && !loginPreviewDismissed.current) {
+      const dismissed = window.localStorage.getItem("tsunagari-login-preview-dismissed");
+      if (dismissed !== "true") {
+        setShowLoginPreview(true);
+      }
+    }
+  }, [isLoggedIn]);
 
   const {
     viewMode,
@@ -58,7 +70,13 @@ export function SchedulerPage() {
   } = useInfiniteWeekScroll(now);
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
-  const { events: googleEvents } = useGoogleCalendarEvents(accessToken, isLoggedIn);
+  const { events: googleEvents } = useGoogleCalendarEvents(
+    accessToken,
+    isLoggedIn,
+    () => {
+      void login();
+    },
+  );
 
   const issuedLink = useMemo(() => {
     if (!createdLinkId) {
@@ -124,7 +142,23 @@ export function SchedulerPage() {
   };
 
   return (
-    <AppShell
+    <>
+      {showLoginPreview && (
+        <LoginPreviewDialog
+          onClose={() => {
+            window.localStorage.setItem("tsunagari-login-preview-dismissed", "true");
+            loginPreviewDismissed.current = true;
+            setShowLoginPreview(false);
+          }}
+          onLogin={() => {
+            window.localStorage.setItem("tsunagari-login-preview-dismissed", "true");
+            loginPreviewDismissed.current = true;
+            setShowLoginPreview(false);
+            void login();
+          }}
+        />
+      )}
+      <AppShell
       topbar={
         <SchedulerTopbar
           viewMode={viewMode}
@@ -132,13 +166,13 @@ export function SchedulerPage() {
           isLoggedIn={isLoggedIn}
             onViewModeChange={setViewMode}
             onScreenModeChange={setScreenMode}
-            onToggleLogin={() => {
-              if (isLoggedIn) {
-                logout();
-                return;
-              }
-              void login();
-            }}
+              onToggleLogin={() => {
+                if (isLoggedIn) {
+                  logout();
+                  return;
+                }
+                void login();
+              }}
           />
         }
       body={
@@ -237,5 +271,6 @@ export function SchedulerPage() {
         </>
       }
     />
+    </>
   );
 }

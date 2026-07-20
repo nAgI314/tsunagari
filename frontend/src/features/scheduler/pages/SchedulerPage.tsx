@@ -31,7 +31,7 @@ export function SchedulerPage() {
   const [showLoginPreview, setShowLoginPreview] = useState(false);
   const loginPreviewDismissed = useRef(false);
   const appDomain = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
-  const { isLoggedIn, login, logout, accessToken } = useGoogleAuth();
+  const { isLoggedIn, isReady, login, logout, accessToken } = useGoogleAuth();
 
   useEffect(() => {
     if (!isLoggedIn && !loginPreviewDismissed.current) {
@@ -145,6 +145,7 @@ export function SchedulerPage() {
     <>
       {showLoginPreview && (
         <LoginPreviewDialog
+          disabled={!isReady}
           onClose={() => {
             window.localStorage.setItem("tsunagari-login-preview-dismissed", "true");
             loginPreviewDismissed.current = true;

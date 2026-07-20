@@ -1597,10 +1597,11 @@ body {
   filter: brightness(1.03);
 }
 
-.tsu-dialog-btn-primary:not([href]) {
+.tsu-dialog-btn-primary:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
 
 @media (max-width: 760px) {
   .tsu-root {

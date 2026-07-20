@@ -1,9 +1,10 @@
 type LoginPreviewDialogProps = {
   onClose: () => void;
   onLogin: () => void;
+  disabled?: boolean;
 };
 
-export function LoginPreviewDialog({ onClose, onLogin }: LoginPreviewDialogProps) {
+export function LoginPreviewDialog({ onClose, onLogin, disabled }: LoginPreviewDialogProps) {
   return (
     <div className="tsu-dialog-overlay" onClick={onClose}>
       <div
@@ -54,6 +55,7 @@ export function LoginPreviewDialog({ onClose, onLogin }: LoginPreviewDialogProps
           </button>
           <button
             className="tsu-dialog-btn tsu-dialog-btn-primary"
+            disabled={disabled}
             onClick={onLogin}
             type="button"
           >

@@ -40,12 +40,27 @@ export const registerCreateEventResponseRoute = (
           return
         }
 
-        const createdResponse = responseRepository.create({
-          adjustmentId: event.id,
-          responderName: parsed.value.responderName,
-          comment: parsed.value.comment ?? null,
+        let savedResponse: ScheduleResponseEntity
+        const existingResponse = await responseRepository.findOne({
+          where: { adjustmentId: event.id, responderName: parsed.value.responderName },
+          relations: { answers: true },
         })
-        const savedResponse = await responseRepository.save(createdResponse)
+
+        if (existingResponse) {
+          // 既存回答を上書き: 古い answers を削除して更新
+          if (existingResponse.answers && existingResponse.answers.length > 0) {
+            await answerRepository.remove(existingResponse.answers)
+          }
+          existingResponse.comment = parsed.value.comment ?? null
+          savedResponse = await responseRepository.save(existingResponse)
+        } else {
+          const createdResponse = responseRepository.create({
+            adjustmentId: event.id,
+            responderName: parsed.value.responderName,
+            comment: parsed.value.comment ?? null,
+          })
+          savedResponse = await responseRepository.save(createdResponse)
+        }
 
         await answerRepository.save(
           parsed.value.answers.map((answer) =>
@@ -61,7 +76,7 @@ export const registerCreateEventResponseRoute = (
           where: { id: savedResponse.id },
           relations: { answers: true },
         })
-        res.status(201).json({ response: toScheduleResponse(fullResponse) })
+        res.status(200).json({ response: toScheduleResponse(fullResponse) })
         return
       }
 
@@ -77,17 +92,28 @@ export const registerCreateEventResponseRoute = (
         return
       }
 
+      const current = inMemoryResponses.get(event.id) ?? []
+      const existingIndex = current.findIndex(
+        (r) => r.responderName === parsed.value.responderName
+      )
+      const existing = existingIndex >= 0 ? current[existingIndex] : undefined
+
       const nextResponse: ScheduleResponse = {
-        id: crypto.randomUUID(),
+        id: existing ? existing.id : crypto.randomUUID(),
         scheduleId: event.id,
         responderName: parsed.value.responderName,
         comment: parsed.value.comment,
         answers: parsed.value.answers,
-        createdAt: new Date().toISOString(),
+        createdAt: existing ? existing.createdAt : new Date().toISOString(),
       }
-      const current = inMemoryResponses.get(event.id) ?? []
-      inMemoryResponses.set(event.id, [...current, nextResponse])
-      res.status(201).json({ response: nextResponse })
+
+      if (existingIndex >= 0) {
+        current[existingIndex] = nextResponse
+        inMemoryResponses.set(event.id, current)
+      } else {
+        inMemoryResponses.set(event.id, [...current, nextResponse])
+      }
+      res.status(200).json({ response: nextResponse })
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to create response."
       res.status(500).json({ error: message })

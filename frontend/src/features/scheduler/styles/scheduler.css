@@ -1327,6 +1327,47 @@ body {
   gap: 6px;
 }
 
+.tsu-results-comments-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tsu-results-comments-panel h2 {
+  margin: 0;
+  font-size: 13px;
+  color: var(--tsu-subtext);
+  font-weight: 600;
+}
+
+.tsu-results-comment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tsu-results-comment-item {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid var(--tsu-soft-border);
+  border-radius: 10px;
+  background: var(--tsu-panel);
+}
+
+.tsu-results-comment-item strong {
+  font-size: 12px;
+  color: var(--tsu-text);
+}
+
+.tsu-results-comment-item p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--tsu-subtext);
+  line-height: 1.4;
+}
+
 .tsu-results-info-list p {
   margin: 0;
   font-size: 12px;
@@ -1446,6 +1487,120 @@ body {
   }
 }
 
+.tsu-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.tsu-dialog-content {
+  background: var(--tsu-panel);
+  border: 1px solid var(--tsu-border);
+  border-radius: 14px;
+  padding: 20px;
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
+}
+
+.tsu-dialog-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--tsu-text);
+}
+
+.tsu-dialog-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--tsu-subtext);
+}
+
+.tsu-dialog-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 240px;
+  overflow-y: auto;
+}
+
+.tsu-dialog-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--tsu-border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--tsu-text);
+  background: var(--tsu-bg);
+  transition: background 120ms ease;
+}
+
+.tsu-dialog-item:hover {
+  background: rgba(24, 95, 165, 0.06);
+}
+
+.tsu-dialog-item input[type="radio"] {
+  accent-color: var(--tsu-primary);
+  width: 16px;
+  height: 16px;
+  margin: 0;
+}
+
+.tsu-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.tsu-dialog-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.tsu-dialog-btn-secondary {
+  border: 1px solid var(--tsu-border);
+  background: var(--tsu-panel);
+  color: var(--tsu-subtext);
+}
+
+.tsu-dialog-btn-secondary:hover {
+  filter: brightness(0.97);
+}
+
+.tsu-dialog-btn-primary {
+  border: none;
+  background: linear-gradient(135deg, var(--tsu-primary), var(--tsu-primary-strong));
+  color: white;
+}
+
+.tsu-dialog-btn-primary:hover {
+  filter: brightness(1.03);
+}
+
+.tsu-dialog-btn-primary:not([href]) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 @media (max-width: 760px) {
   .tsu-root {
     margin: 10px auto;
@@ -1516,5 +1671,62 @@ body {
   .tsu-footer {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* Login preview dialog */
+.tsu-login-preview-dialog {
+  max-width: 1160px;
+  width: 92vw;
+  padding: 32px;
+}
+
+.tsu-login-preview-videos {
+  display: flex;
+  gap: 28px;
+  justify-content: center;
+}
+
+.tsu-login-preview-item {
+  flex: 1 1 0;
+  min-width: 420px;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tsu-login-preview-video {
+  width: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--tsu-border);
+  background: var(--tsu-bg);
+}
+
+.tsu-login-preview-caption {
+  margin: 0;
+  font-size: 15px;
+  color: var(--tsu-subtext);
+  line-height: 1.6;
+}
+
+.tsu-login-preview-dialog .tsu-dialog-title {
+  font-size: 18px;
+}
+
+.tsu-login-preview-dialog .tsu-dialog-hint {
+  font-size: 14px;
+}
+
+@media (max-width: 920px) {
+  .tsu-login-preview-videos {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .tsu-login-preview-item {
+    min-width: auto;
+    width: 100%;
+    max-width: 520px;
   }
 }

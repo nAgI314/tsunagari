@@ -41,6 +41,8 @@ export function EventResultsPage({ linkId }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [requiredResponders, setRequiredResponders] = useState<string[]>([]);
   const [requiredRule, setRequiredRule] = useState<"ok-only" | "ok-or-maybe">("ok-only");
+  const [showResponderDialog, setShowResponderDialog] = useState(false);
+  const [selectedResponder, setSelectedResponder] = useState<string>("");
 
   useEffect(() => {
     let active = true;
@@ -175,6 +177,16 @@ export function EventResultsPage({ linkId }: Props) {
   }, [linkId]);
   const resultUrl = `${eventUrl.replace(/\/+$/, "")}/results`;
 
+  const comments = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const response of responses) {
+      if (response.comment && !map.has(response.responderName)) {
+        map.set(response.responderName, response.comment);
+      }
+    }
+    return Array.from(map.entries());
+  }, [responses]);
+
   const toggleRequiredResponder = (name: string) => {
     setRequiredResponders((prev) =>
       prev.includes(name) ? prev.filter((item) => item !== name) : [...prev, name],
@@ -218,10 +230,76 @@ export function EventResultsPage({ linkId }: Props) {
           <span className="tsu-brand-name">Tsunagari</span>
           <span className="tsu-gcal-pill">回答一覧</span>
         </div>
-        <a className="tsu-today-button" href={`/event/${linkId}`}>
-          回答ページへ
-        </a>
+        <button
+          className="tsu-today-button"
+          onClick={() => setShowResponderDialog(true)}
+          type="button"
+        >
+          回答を編集する
+        </button>
       </section>
+
+      {showResponderDialog && (
+        <div
+          className="tsu-dialog-overlay"
+          onClick={() => setShowResponderDialog(false)}
+        >
+          <div
+            className="tsu-dialog-content"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="tsu-dialog-title">回答を編集する</h3>
+            {responders.length === 0 ? (
+              <p className="tsu-response-description">まだ回答がありません。</p>
+            ) : (
+              <>
+                <p className="tsu-dialog-hint">ユーザーを選択してください</p>
+                <div className="tsu-dialog-list">
+                  {responders.map((name) => (
+                    <label className="tsu-dialog-item" key={name}>
+                      <input
+                        checked={selectedResponder === name}
+                        name="responder"
+                        onChange={() => setSelectedResponder(name)}
+                        type="radio"
+                        value={name}
+                      />
+                      <span>{name}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="tsu-dialog-actions">
+                  <button
+                    className="tsu-dialog-btn tsu-dialog-btn-secondary"
+                    onClick={() => {
+                      setShowResponderDialog(false);
+                      setSelectedResponder("");
+                    }}
+                    type="button"
+                  >
+                    キャンセル
+                  </button>
+                  <a
+                    className="tsu-dialog-btn tsu-dialog-btn-primary"
+                    href={
+                      selectedResponder
+                        ? `/event/${linkId}?responder=${encodeURIComponent(selectedResponder)}`
+                        : undefined
+                    }
+                    onClick={(e) => {
+                      if (!selectedResponder) {
+                        e.preventDefault();
+                      }
+                    }}
+                  >
+                    決定
+                  </a>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       <section className="tsu-body tsu-body-results">
         <div className="tsu-calendar-area">
@@ -366,6 +444,20 @@ export function EventResultsPage({ linkId }: Props) {
               </p>
             </div>
           </section>
+
+          {comments.length > 0 && (
+            <section className="tsu-panel tsu-results-comments-panel">
+              <h2>回答コメント</h2>
+              <div className="tsu-results-comment-list">
+                {comments.map(([name, comment]) => (
+                  <div className="tsu-results-comment-item" key={name}>
+                    <strong>{name}</strong>
+                    <p>{comment}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
         </aside>
       </section>
       <footer className="tsu-site-footer">

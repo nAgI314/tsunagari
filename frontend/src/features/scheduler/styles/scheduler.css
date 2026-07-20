@@ -248,7 +248,7 @@ body {
   box-sizing: border-box;
   min-height: 0;
   scroll-behavior: smooth;
-  overscroll-behavior: contain;
+  overscroll-behavior: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -632,6 +632,7 @@ body {
   height: 100%;
   min-height: 0;
   background: var(--tsu-bg);
+  overscroll-behavior: auto;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }

@@ -70,12 +70,22 @@ export function SchedulerPage() {
   } = useInfiniteWeekScroll(now);
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
-  const { events: googleEvents } = useGoogleCalendarEvents(
+  const { events: googleEvents, calendars, setCalendars } = useGoogleCalendarEvents(
     accessToken,
     isLoggedIn,
     () => {
       void login();
     },
+  );
+
+  const selectedCalendarIds = useMemo(
+    () => new Set(calendars.filter((c) => c.selected).map((c) => c.id)),
+    [calendars],
+  );
+
+  const filteredEvents = useMemo(
+    () => googleEvents.filter((e) => selectedCalendarIds.has(e.calendarId)),
+    [googleEvents, selectedCalendarIds],
   );
 
   const issuedLink = useMemo(() => {
@@ -180,17 +190,23 @@ export function SchedulerPage() {
         <section className="tsu-body">
           <div className="tsu-calendar-area">
             <PeriodBar
-              label={
-                viewMode === "week"
-                  ? formatWeekPeriod(currentWeekStart)
-                  : formatMonthLabel(currentMonthStart)
-              }
+              calendars={calendars}
               hint={
                 viewMode === "week"
                   ? "左右スクロールで週を移動"
                   : "上下スクロールで月を移動"
               }
+              label={
+                viewMode === "week"
+                  ? formatWeekPeriod(currentWeekStart)
+                  : formatMonthLabel(currentMonthStart)
+              }
               onJumpToToday={viewMode === "week" ? jumpToCurrentWeek : jumpToCurrentMonth}
+              onToggleCalendar={(id) => {
+                setCalendars((prev) =>
+                  prev.map((c) => (c.id === id ? { ...c, selected: !c.selected } : c)),
+                );
+              }}
             />
             <div className="tsu-calendar-viewport">
               <CalendarViewport
@@ -206,7 +222,7 @@ export function SchedulerPage() {
                 isLoggedIn={isLoggedIn}
                 slotByKey={slotByKey}
                 candidateSlots={candidateSlots}
-                googleEvents={isLoggedIn ? googleEvents : SAMPLE_EVENTS}
+                googleEvents={isLoggedIn ? filteredEvents : SAMPLE_EVENTS}
                 onWeekCellClick={onWeekCellClick}
                 onMonthDayClick={onMonthDayClick}
                  onCandidateSlotClickById={onCandidateSlotClickById}

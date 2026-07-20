@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import type { GoogleEvent } from "../model/types";
 
+export type CalendarInfo = {
+  id: string;
+  name: string;
+  selected: boolean;
+  primary: boolean;
+};
+
 type CalendarEventItem = {
   id?: string;
   summary?: string;
@@ -14,7 +21,17 @@ type CalendarEventsResponse = {
 
 const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const TOKEN_STORAGE_KEY = "tsunagari-google-auth";
+const CALENDAR_VISIBILITY_KEY = "tsunagari-calendar-visibility";
 const TOKEN_REFRESH_MARGIN_MS = 5 * 60 * 1000; // 5 minutes
+
+function loadVisibility(): Record<string, boolean> {
+  try {
+    const raw = window.localStorage.getItem(CALENDAR_VISIBILITY_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {};
+  } catch {
+    return {};
+  }
+}
 
 const parseGoogleDate = (value: string): Date => {
   if (DATE_ONLY_PATTERN.test(value)) {
@@ -42,6 +59,7 @@ export function useGoogleCalendarEvents(
   onAuthError?: () => void,
 ) {
   const [events, setEvents] = useState<GoogleEvent[]>([]);
+  const [calendars, setCalendars] = useState<CalendarInfo[]>([]);
   const [error, setError] = useState<string | null>(null);
   const onAuthErrorRef = useRef(onAuthError);
   onAuthErrorRef.current = onAuthError;
@@ -49,12 +67,14 @@ export function useGoogleCalendarEvents(
   useEffect(() => {
     if (!enabled || !accessToken) {
       setEvents([]);
+      setCalendars([]);
       setError(null);
       return;
     }
 
     if (isTokenExpiringSoon()) {
       setEvents([]);
+      setCalendars([]);
       setError(null);
       onAuthErrorRef.current?.();
       return;
@@ -90,34 +110,48 @@ export function useGoogleCalendarEvents(
           }
           throw new Error("Googleカレンダーの取得に失敗しました。");
         }
-        const listJson = (await listResponse.json()) as { items?: { id?: string }[] };
-        const calendarIds = (listJson.items ?? [])
-          .map((item) => item.id)
-          .filter((id): id is string => !!id);
+        const listJson = (await listResponse.json()) as {
+          items?: { id?: string; summary?: string; primary?: boolean }[];
+        };
+        const savedVisibility = loadVisibility();
+        const allCalendars = (listJson.items ?? [])
+          .map((item) =>
+            item.id
+              ? {
+                  id: item.id,
+                  name: item.summary?.trim() || item.id,
+                  selected: savedVisibility[item.id] ?? true,
+                  primary: !!item.primary,
+                }
+              : null,
+          )
+          .filter((c): c is CalendarInfo => c !== null);
 
         // 2. 各カレンダーのイベントを並列取得
         const eventResponses = await Promise.all(
-          calendarIds.map(async (calendarId) => {
+          allCalendars.map(async (calendar) => {
             try {
               const response = await fetch(
-                `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events?${params.toString()}`,
+                `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendar.id)}/events?${params.toString()}`,
                 {
                   headers: { Authorization: `Bearer ${accessToken}` },
                   signal: controller.signal,
                 },
               );
               if (!response.ok) {
-                return { items: [] as CalendarEventItem[] };
+                return { calendarId: calendar.id, items: [] as CalendarEventItem[] };
               }
               const json = (await response.json()) as CalendarEventsResponse;
-              return json;
+              return { calendarId: calendar.id, items: json.items ?? [] };
             } catch {
-              return { items: [] as CalendarEventItem[] };
+              return { calendarId: calendar.id, items: [] as CalendarEventItem[] };
             }
           }),
         );
 
-        const allItems = eventResponses.flatMap((res) => res.items ?? []);
+        const allItems = eventResponses.flatMap((res) =>
+          (res.items ?? []).map((item) => ({ ...item, calendarId: res.calendarId })),
+        );
 
         // 3. 重複排除（同じイベントが複数カレンダーに含まれる場合がある）
         const seenIds = new Set<string>();
@@ -144,10 +178,13 @@ export function useGoogleCalendarEvents(
               title: item.summary?.trim() || "予定",
               start,
               end,
+              calendarId: item.calendarId,
+              calendarName: allCalendars.find((c) => c.id === item.calendarId)?.name,
             };
           })
-          .filter((item): item is GoogleEvent => item !== null);
+          .filter((item) => item !== null);
         setEvents(mapped);
+        setCalendars(allCalendars);
       } catch (err) {
         if (controller.signal.aborted) {
           return;
@@ -160,5 +197,14 @@ export function useGoogleCalendarEvents(
     return () => controller.abort();
   }, [accessToken, enabled]);
 
-  return { events, error };
+  useEffect(() => {
+    if (calendars.length === 0) return;
+    const record: Record<string, boolean> = {};
+    for (const c of calendars) {
+      record[c.id] = c.selected;
+    }
+    window.localStorage.setItem(CALENDAR_VISIBILITY_KEY, JSON.stringify(record));
+  }, [calendars]);
+
+  return { events, calendars, setCalendars, error };
 }

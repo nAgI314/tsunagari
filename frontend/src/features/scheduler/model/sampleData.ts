@@ -7,23 +7,27 @@ export const SAMPLE_EVENTS: GoogleEvent[] = [
     title: "1on1",
     start: buildDate(2026, 4, 20, 13, 0),
     end: buildDate(2026, 4, 20, 14, 30),
+    calendarId: "sample",
   },
   {
     id: "g-2",
     title: "定例MTG",
     start: buildDate(2026, 4, 21, 11, 0),
     end: buildDate(2026, 4, 21, 12, 0),
+    calendarId: "sample",
   },
   {
     id: "g-3",
     title: "レビュー",
     start: buildDate(2026, 4, 22, 15, 0),
     end: buildDate(2026, 4, 22, 16, 0),
+    calendarId: "sample",
   },
   {
     id: "g-4",
     title: "商談",
     start: buildDate(2026, 4, 24, 12, 0),
     end: buildDate(2026, 4, 24, 13, 30),
+    calendarId: "sample",
   },
 ];

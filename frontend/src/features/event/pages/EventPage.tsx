@@ -61,12 +61,22 @@ export function EventPage({ linkId }: EventPageProps) {
   } = useInfiniteWeekScroll(now);
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
-  const { events: googleEvents } = useGoogleCalendarEvents(
+  const { events: googleEvents, calendars, setCalendars } = useGoogleCalendarEvents(
     accessToken,
     isLoggedIn,
     () => {
       void login();
     },
+  );
+
+  const selectedCalendarIds = useMemo(
+    () => new Set(calendars.filter((c) => c.selected).map((c) => c.id)),
+    [calendars],
+  );
+
+  const filteredEvents = useMemo(
+    () => googleEvents.filter((e) => selectedCalendarIds.has(e.calendarId)),
+    [googleEvents, selectedCalendarIds],
   );
 
   useEffect(() => {
@@ -209,7 +219,7 @@ export function EventPage({ linkId }: EventPageProps) {
 
   const hasAnsweredAll = event ? event.candidates.every((candidate) => answerByCandidateId.has(candidate.id)) : false;
   const responseDeadlineLabel = "回答期限: 未設定";
-  const activeGoogleEvents = isLoggedIn ? googleEvents : [];
+  const activeGoogleEvents = isLoggedIn ? filteredEvents : [];
 
   const onAutoFillByGoogleCalendar = () => {
     setSubmitError(null);
@@ -325,6 +335,7 @@ export function EventPage({ linkId }: EventPageProps) {
         <section className="tsu-body tsu-body-response">
           <div className="tsu-calendar-area">
             <PeriodBar
+              calendars={calendars}
               hint={
                 viewMode === "week"
                   ? "左右スクロールで週を移動"
@@ -332,12 +343,17 @@ export function EventPage({ linkId }: EventPageProps) {
               }
               label={viewMode === "week" ? formatWeekPeriod(currentWeekStart) : formatMonthLabel(currentMonthStart)}
               onJumpToToday={viewMode === "week" ? jumpToCurrentWeek : jumpToCurrentMonth}
+              onToggleCalendar={(id) => {
+                setCalendars((prev) =>
+                  prev.map((c) => (c.id === id ? { ...c, selected: !c.selected } : c)),
+                );
+              }}
             />
             <div className="tsu-calendar-viewport">
               <CalendarViewport
                 candidateSlots={candidateSlots}
                 getSlotAnswer={(slot) => answerByCandidateId.get(slot.id)}
-                googleEvents={isLoggedIn ? googleEvents : SAMPLE_EVENTS}
+                googleEvents={isLoggedIn ? filteredEvents : SAMPLE_EVENTS}
                 isLoggedIn={isLoggedIn}
                 monthOffsets={monthOffsets}
                 monthScrollerRef={monthScrollerRef}

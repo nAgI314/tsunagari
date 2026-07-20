@@ -46,15 +46,20 @@ export function PeriodBar({
           <div className="tsu-calendar-picker-wrap">
             <button
               className={`tsu-today-button tsu-calendar-picker-trigger ${open ? "active" : ""}`}
+              disabled={loadingCalendars}
               onClick={() => setOpen((prev) => !prev)}
               type="button"
             >
-              <Calendar size={14} />
+              {loadingCalendars ? (
+                <Loader2 size={14} className="tsu-calendar-picker-spinner" />
+              ) : (
+                <Calendar size={14} />
+              )}
               表示するカレンダー
             </button>
             {open && (
               <div className="tsu-calendar-picker-popover">
-                {loadingCalendars && calendars.length === 0 ? (
+                {loadingCalendars ? (
                   <div className="tsu-calendar-picker-loading">
                     <Loader2 size={16} className="tsu-calendar-picker-spinner" />
                     <span>カレンダーをロード中</span>

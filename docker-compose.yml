@@ -19,11 +19,11 @@ services:
   backend:
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`${APP_DOMAIN:-localhost}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.backend.priority=100"
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.tsunagari-backend.rule=Host(`${APP_DOMAIN:-localhost}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.tsunagari-backend.entrypoints=websecure"
+      - "traefik.http.routers.tsunagari-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.tsunagari-backend.priority=100"
+      - "traefik.http.services.tsunagari-backend.loadbalancer.server.port=3000"
       - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-traefik-network}"
     build:
       context: .

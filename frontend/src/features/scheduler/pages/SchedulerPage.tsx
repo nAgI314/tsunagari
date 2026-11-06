@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AppShell } from "@/app/AppShell";
 import { createEvent } from "@/api";
 import { useGoogleAuth } from "@/features/auth/GoogleAuthContext";
+import { LoginPreviewDialog } from "@/features/auth/LoginPreviewDialog";
 import { Button } from "@/components/ui/button";
 import { CalendarViewport } from "../components/calendar/CalendarViewport";
 import { PeriodBar } from "../components/common/PeriodBar";
@@ -27,8 +28,19 @@ export function SchedulerPage() {
   const [createdLinkId, setCreatedLinkId] = useState<string | null>(null);
   const [createError, setCreateError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [showLoginPreview, setShowLoginPreview] = useState(false);
+  const loginPreviewDismissed = useRef(false);
   const appDomain = import.meta.env.VITE_PUBLIC_APP_ORIGIN?.trim();
-  const { isLoggedIn, login, logout, accessToken } = useGoogleAuth();
+  const { isLoggedIn, isReady, login, logout, accessToken } = useGoogleAuth();
+
+  useEffect(() => {
+    if (!isLoggedIn && !loginPreviewDismissed.current) {
+      const dismissed = window.localStorage.getItem("tsunagari-login-preview-dismissed");
+      if (dismissed !== "true") {
+        setShowLoginPreview(true);
+      }
+    }
+  }, [isLoggedIn]);
 
   const {
     viewMode,
@@ -58,7 +70,23 @@ export function SchedulerPage() {
   } = useInfiniteWeekScroll(now);
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
-  const { events: googleEvents } = useGoogleCalendarEvents(accessToken, isLoggedIn);
+  const { events: googleEvents, calendars, setCalendars, loading: loadingCalendars } = useGoogleCalendarEvents(
+    accessToken,
+    isLoggedIn,
+    () => {
+      void login();
+    },
+  );
+
+  const selectedCalendarIds = useMemo(
+    () => new Set(calendars.filter((c) => c.selected).map((c) => c.id)),
+    [calendars],
+  );
+
+  const filteredEvents = useMemo(
+    () => googleEvents.filter((e) => selectedCalendarIds.has(e.calendarId)),
+    [googleEvents, selectedCalendarIds],
+  );
 
   const issuedLink = useMemo(() => {
     if (!createdLinkId) {
@@ -124,7 +152,24 @@ export function SchedulerPage() {
   };
 
   return (
-    <AppShell
+    <>
+      {showLoginPreview && (
+        <LoginPreviewDialog
+          disabled={!isReady}
+          onClose={() => {
+            window.localStorage.setItem("tsunagari-login-preview-dismissed", "true");
+            loginPreviewDismissed.current = true;
+            setShowLoginPreview(false);
+          }}
+          onLogin={() => {
+            window.localStorage.setItem("tsunagari-login-preview-dismissed", "true");
+            loginPreviewDismissed.current = true;
+            setShowLoginPreview(false);
+            void login();
+          }}
+        />
+      )}
+      <AppShell
       topbar={
         <SchedulerTopbar
           viewMode={viewMode}
@@ -132,30 +177,37 @@ export function SchedulerPage() {
           isLoggedIn={isLoggedIn}
             onViewModeChange={setViewMode}
             onScreenModeChange={setScreenMode}
-            onToggleLogin={() => {
-              if (isLoggedIn) {
-                logout();
-                return;
-              }
-              void login();
-            }}
+              onToggleLogin={() => {
+                if (isLoggedIn) {
+                  logout();
+                  return;
+                }
+                void login();
+              }}
           />
         }
       body={
         <section className="tsu-body">
           <div className="tsu-calendar-area">
             <PeriodBar
-              label={
-                viewMode === "week"
-                  ? formatWeekPeriod(currentWeekStart)
-                  : formatMonthLabel(currentMonthStart)
-              }
+              calendars={calendars}
               hint={
                 viewMode === "week"
                   ? "左右スクロールで週を移動"
                   : "上下スクロールで月を移動"
               }
+              label={
+                viewMode === "week"
+                  ? formatWeekPeriod(currentWeekStart)
+                  : formatMonthLabel(currentMonthStart)
+              }
+              loadingCalendars={loadingCalendars}
               onJumpToToday={viewMode === "week" ? jumpToCurrentWeek : jumpToCurrentMonth}
+              onToggleCalendar={(id) => {
+                setCalendars((prev) =>
+                  prev.map((c) => (c.id === id ? { ...c, selected: !c.selected } : c)),
+                );
+              }}
             />
             <div className="tsu-calendar-viewport">
               <CalendarViewport
@@ -171,7 +223,7 @@ export function SchedulerPage() {
                 isLoggedIn={isLoggedIn}
                 slotByKey={slotByKey}
                 candidateSlots={candidateSlots}
-                googleEvents={isLoggedIn ? googleEvents : SAMPLE_EVENTS}
+                googleEvents={isLoggedIn ? filteredEvents : SAMPLE_EVENTS}
                 onWeekCellClick={onWeekCellClick}
                 onMonthDayClick={onMonthDayClick}
                  onCandidateSlotClickById={onCandidateSlotClickById}
@@ -237,5 +289,6 @@ export function SchedulerPage() {
         </>
       }
     />
+    </>
   );
 }

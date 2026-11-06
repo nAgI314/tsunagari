@@ -19,11 +19,11 @@ services:
   backend:
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`${APP_DOMAIN:-localhost}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.backend.priority=100"
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.tsunagari-backend.rule=Host(`${APP_DOMAIN:-localhost}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.tsunagari-backend.entrypoints=websecure"
+      - "traefik.http.routers.tsunagari-backend.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.tsunagari-backend.priority=100"
+      - "traefik.http.services.tsunagari-backend.loadbalancer.server.port=3000"
       - "traefik.docker.network=${TRAEFIK_DOCKER_NETWORK:-traefik-network}"
     build:
       context: .
@@ -41,6 +41,8 @@ services:
       NODE_ENV: production
       DEV_API_ENABLED: "false"
       PORT: 3000
+      SESSION_SECRET: ${SESSION_SECRET:-change-me-in-production}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-${VITE_GOOGLE_CLIENT_ID:-}}
     depends_on:
       db:
         condition: service_healthy
@@ -51,7 +53,7 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         VITE_PUBLIC_APP_ORIGIN: ${VITE_PUBLIC_APP_ORIGIN:-https://localhost}
-        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-${GOOGLE_CLIENT_ID:-}}
     networks:
       - traefik-network
     restart: unless-stopped

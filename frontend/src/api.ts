@@ -146,3 +146,46 @@ export const deleteDevUser = async (id: string): Promise<void> => {
     throw new Error(await parseApiError(response));
   }
 };
+
+export type AuthUser = {
+  id: string;
+  googleId: string;
+  email: string;
+  name: string | null;
+};
+
+export const verifyAuth = async (accessToken: string): Promise<{ user: AuthUser }> => {
+  const response = await fetch("/api/auth/verify", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ accessToken }),
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as { user: AuthUser };
+};
+
+export const logoutAuth = async (): Promise<void> => {
+  const response = await fetch("/api/auth/logout", {
+    method: "POST",
+    credentials: "include",
+  });
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+};
+
+export const getMe = async (): Promise<{ user: AuthUser } | null> => {
+  const response = await fetch("/api/auth/me", {
+    credentials: "include",
+  });
+  if (response.status === 401) {
+    return null;
+  }
+  if (!response.ok) {
+    throw new Error(await parseApiError(response));
+  }
+  return (await response.json()) as { user: AuthUser };
+};

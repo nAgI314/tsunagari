@@ -13,6 +13,8 @@ export type GoogleEvent = {
   title: string;
   start: Date;
   end: Date;
+  calendarId: string;
+  calendarName?: string;
 };
 
 export type CandidateSlot = TimeSlot & {

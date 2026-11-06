@@ -10,7 +10,7 @@ export type UserPayload = {
 export type UserRepositoryLike = {
   create: (payload: UserPayload) => User
   save: (user: User) => Promise<User>
-  findOneBy: (where: { id: string }) => Promise<User | null>
+  findOneBy: (where: Record<string, unknown>) => Promise<User | null>
   find: () => Promise<User[]>
   remove: (user: User) => Promise<User>
 }

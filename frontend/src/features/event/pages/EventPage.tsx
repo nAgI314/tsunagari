@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
-import type { ScheduleEvent } from "../../../../../shared/src";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { ScheduleEvent, ScheduleResponse } from "../../../../../shared/src";
 import { AppShell } from "@/app/AppShell";
-import { EventNotFoundError, createEventResponseByLinkId, getEventByLinkId } from "@/api";
+import { EventNotFoundError, createEventResponseByLinkId, getEventByLinkId, listEventResponsesByLinkId } from "@/api";
 import { useGoogleAuth } from "@/features/auth/GoogleAuthContext";
+import { LoginPreviewDialog } from "@/features/auth/LoginPreviewDialog";
 import { Button } from "@/components/ui/button";
 import { CalendarViewport } from "@/features/scheduler/components/calendar/CalendarViewport";
 import { PeriodBar } from "@/features/scheduler/components/common/PeriodBar";
@@ -14,6 +15,7 @@ import type { AnswerStatus, CandidateSlot, ViewMode } from "@/features/scheduler
 import { SAMPLE_EVENTS } from "@/features/scheduler/model/sampleData";
 import { formatMonthLabel, formatWeekPeriod, timeLabel } from "@/features/scheduler/utils/date";
 import { shiftAnswer } from "@/features/scheduler/utils/slot";
+import { usePageTitle } from "@/features/scheduler/hooks/usePageTitle";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { EventAnswerTopbar } from "../components/EventAnswerTopbar";
 import { ResponseInfoPanel } from "../components/ResponseInfoPanel";
@@ -36,7 +38,20 @@ export function EventPage({ linkId }: EventPageProps) {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitMessage, setSubmitMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [responses, setResponses] = useState<ScheduleResponse[]>([]);
+  const [existingResponse, setExistingResponse] = useState<ScheduleResponse | null>(null);
+  const [showLoginPreview, setShowLoginPreview] = useState(false);
+  const loginPreviewDismissed = useRef(false);
   const { isLoggedIn, login, logout, accessToken } = useGoogleAuth();
+
+  useEffect(() => {
+    if (!isLoggedIn && !loginPreviewDismissed.current) {
+      const dismissed = window.localStorage.getItem("tsunagari-login-preview-dismissed");
+      if (dismissed !== "true") {
+        setShowLoginPreview(true);
+      }
+    }
+  }, [isLoggedIn]);
 
   const {
     weekOffsets,
@@ -47,7 +62,23 @@ export function EventPage({ linkId }: EventPageProps) {
   } = useInfiniteWeekScroll(now);
   const { monthOffsets, currentMonthStart, monthScrollerRef, onMonthScroll, jumpToCurrentMonth } =
     useInfiniteMonthScroll(now);
-  const { events: googleEvents } = useGoogleCalendarEvents(accessToken, isLoggedIn);
+  const { events: googleEvents, calendars, setCalendars, loading: loadingCalendars } = useGoogleCalendarEvents(
+    accessToken,
+    isLoggedIn,
+    () => {
+      void login();
+    },
+  );
+
+  const selectedCalendarIds = useMemo(
+    () => new Set(calendars.filter((c) => c.selected).map((c) => c.id)),
+    [calendars],
+  );
+
+  const filteredEvents = useMemo(
+    () => googleEvents.filter((e) => selectedCalendarIds.has(e.calendarId)),
+    [googleEvents, selectedCalendarIds],
+  );
 
   useEffect(() => {
     let active = true;
@@ -58,12 +89,43 @@ export function EventPage({ linkId }: EventPageProps) {
         setError(null);
         setSubmitError(null);
         setSubmitMessage(null);
-        const response = await getEventByLinkId(linkId);
+        const [eventResult, responsesResult] = await Promise.all([
+          getEventByLinkId(linkId),
+          listEventResponsesByLinkId(linkId),
+        ]);
         if (!active) {
           return;
         }
-        setEvent(response.event);
-        setAnswerByCandidateId(new Map());
+        setEvent(eventResult.event);
+        setResponses(responsesResult.responses);
+
+        const params = new URLSearchParams(window.location.search);
+        const initialResponder = params.get("responder") ?? "";
+        setResponderName(initialResponder);
+
+        if (initialResponder.trim()) {
+          const found = responsesResult.responses.find(
+            (r) => r.responderName === initialResponder.trim()
+          );
+          if (found) {
+            setExistingResponse(found);
+            setComment(found.comment ?? "");
+            const map = new Map<string, AnswerStatus>();
+            for (const answer of found.answers) {
+              map.set(answer.candidateId, answer.status);
+            }
+            setAnswerByCandidateId(map);
+          } else {
+            setExistingResponse(null);
+            setComment("");
+            setAnswerByCandidateId(new Map());
+          }
+        } else {
+          setExistingResponse(null);
+          setComment("");
+          setAnswerByCandidateId(new Map());
+        }
+
         setStatus("ready");
       } catch (err) {
         if (!active) {
@@ -134,9 +196,33 @@ export function EventPage({ linkId }: EventPageProps) {
     });
   };
 
+  useEffect(() => {
+    if (!event || responses.length === 0) {
+      return;
+    }
+    if (!responderName.trim()) {
+      setExistingResponse(null);
+      return;
+    }
+    const found = responses.find((r) => r.responderName === responderName.trim());
+    if (found) {
+      setExistingResponse(found);
+      setComment(found.comment ?? "");
+      const map = new Map<string, AnswerStatus>();
+      for (const answer of found.answers) {
+        map.set(answer.candidateId, answer.status);
+      }
+      setAnswerByCandidateId(map);
+    } else {
+      setExistingResponse(null);
+    }
+  }, [responderName, responses, event]);
+
   const hasAnsweredAll = event ? event.candidates.every((candidate) => answerByCandidateId.has(candidate.id)) : false;
   const responseDeadlineLabel = "回答期限: 未設定";
-  const activeGoogleEvents = isLoggedIn ? googleEvents : [];
+  const activeGoogleEvents = isLoggedIn ? filteredEvents : [];
+
+  usePageTitle(event?.title);
 
   const onAutoFillByGoogleCalendar = () => {
     setSubmitError(null);
@@ -217,7 +303,23 @@ export function EventPage({ linkId }: EventPageProps) {
   }
 
   return (
-    <AppShell
+    <>
+      {showLoginPreview && (
+        <LoginPreviewDialog
+          onClose={() => {
+            window.localStorage.setItem("tsunagari-login-preview-dismissed", "true");
+            loginPreviewDismissed.current = true;
+            setShowLoginPreview(false);
+          }}
+          onLogin={() => {
+            window.localStorage.setItem("tsunagari-login-preview-dismissed", "true");
+            loginPreviewDismissed.current = true;
+            setShowLoginPreview(false);
+            void login();
+          }}
+        />
+      )}
+      <AppShell
       topbar={
         <EventAnswerTopbar
           isLoggedIn={isLoggedIn}
@@ -236,19 +338,26 @@ export function EventPage({ linkId }: EventPageProps) {
         <section className="tsu-body tsu-body-response">
           <div className="tsu-calendar-area">
             <PeriodBar
+              calendars={calendars}
               hint={
                 viewMode === "week"
                   ? "左右スクロールで週を移動"
                   : "上下スクロールで月を移動"
               }
               label={viewMode === "week" ? formatWeekPeriod(currentWeekStart) : formatMonthLabel(currentMonthStart)}
+              loadingCalendars={loadingCalendars}
               onJumpToToday={viewMode === "week" ? jumpToCurrentWeek : jumpToCurrentMonth}
+              onToggleCalendar={(id) => {
+                setCalendars((prev) =>
+                  prev.map((c) => (c.id === id ? { ...c, selected: !c.selected } : c)),
+                );
+              }}
             />
             <div className="tsu-calendar-viewport">
               <CalendarViewport
                 candidateSlots={candidateSlots}
                 getSlotAnswer={(slot) => answerByCandidateId.get(slot.id)}
-                googleEvents={isLoggedIn ? googleEvents : SAMPLE_EVENTS}
+                googleEvents={isLoggedIn ? filteredEvents : SAMPLE_EVENTS}
                 isLoggedIn={isLoggedIn}
                 monthOffsets={monthOffsets}
                 monthScrollerRef={monthScrollerRef}
@@ -309,12 +418,13 @@ export function EventPage({ linkId }: EventPageProps) {
                 type="button"
                 variant="ghost"
               >
-                {submitting ? "送信中..." : "回答を送信"}
+                {submitting ? "送信中..." : existingResponse ? "回答を更新" : "回答を送信"}
               </Button>
             </section>
           </aside>
         </section>
       }
     />
+    </>
   );
 }

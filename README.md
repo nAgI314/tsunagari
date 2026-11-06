@@ -50,7 +50,7 @@ frontend + backend + PostgreSQL をまとめて起動できます。
 - `DB_PASSWORD`
 - `DB_NAME`
 - `VITE_PUBLIC_APP_ORIGIN`
-- `VITE_GOOGLE_CLIENT_ID`
+- `GOOGLE_CLIENT_ID`
 
 公開ポート:
 
@@ -65,7 +65,7 @@ Traefik がエッジで HTTPS を終端し、`/api/*` は backend、それ以外
 APP_DOMAIN=example.com
 TRAEFIK_DOCKER_NETWORK=traefik-network
 VITE_PUBLIC_APP_ORIGIN=https://example.com
-VITE_GOOGLE_CLIENT_ID=1234567890-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_ID=1234567890-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.apps.googleusercontent.com
 DB_USERNAME=foo
 DB_PASSWORD=bar
 DB_NAME=test_db

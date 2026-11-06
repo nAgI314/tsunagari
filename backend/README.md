@@ -10,6 +10,7 @@ cp .env.example .env
 ```
 
 `.env` の DB 設定を更新してください。
+Google ログインを使う場合は `GOOGLE_CLIENT_ID` を設定してください。
 `/api/dev/*` を使う場合は `NODE_ENV=development` かつ `DEV_API_ENABLED=true` が必要です。
 
 ## DB Migration

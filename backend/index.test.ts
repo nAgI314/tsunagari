@@ -4,13 +4,28 @@ import { createApp } from "./index"
 import User from "./src/entities/User"
 
 const originalFetch = globalThis.fetch
+const TEST_GOOGLE_CLIENT_ID = "test-client-id.apps.googleusercontent.com"
 
-const mockGoogleUserInfo = (payload: { sub: string; email: string; name?: string }) => {
+type GoogleTokenInfoMock = {
+  aud?: unknown
+  sub?: unknown
+  email?: unknown
+}
+
+const mockGoogleUserInfo = (
+  payload: { sub?: unknown; email?: unknown; name?: unknown },
+  tokenInfo: GoogleTokenInfoMock = {
+    aud: TEST_GOOGLE_CLIENT_ID,
+    sub: payload.sub,
+    email: payload.email,
+  }
+) => {
   globalThis.fetch = mock(() =>
     Promise.resolve(
       new Response(JSON.stringify(payload), { status: 200, headers: { "content-type": "application/json" } })
     )
   ) as unknown as typeof fetch
+  return async () => tokenInfo
 }
 
 const createUserRepositoryMock = () => {
@@ -52,11 +67,13 @@ describe("backend api", () => {
   const originalNodeEnv = process.env.NODE_ENV
   const originalDevApiEnabled = process.env.DEV_API_ENABLED
   const originalSessionSecret = process.env.SESSION_SECRET
+  const originalGoogleClientId = process.env.GOOGLE_CLIENT_ID
 
   beforeEach(() => {
     process.env.NODE_ENV = "development"
     process.env.DEV_API_ENABLED = "true"
     process.env.SESSION_SECRET = "test-session-secret"
+    process.env.GOOGLE_CLIENT_ID = TEST_GOOGLE_CLIENT_ID
     process.env.SESSION_STORE = "memory"
   })
 
@@ -64,6 +81,11 @@ describe("backend api", () => {
     process.env.NODE_ENV = originalNodeEnv
     process.env.DEV_API_ENABLED = originalDevApiEnabled
     process.env.SESSION_SECRET = originalSessionSecret
+    if (originalGoogleClientId === undefined) {
+      delete process.env.GOOGLE_CLIENT_ID
+    } else {
+      process.env.GOOGLE_CLIENT_ID = originalGoogleClientId
+    }
     delete process.env.SESSION_STORE
     globalThis.fetch = originalFetch
   })
@@ -255,8 +277,12 @@ describe("backend api", () => {
   })
 
   test("POST /api/auth/verify creates session and returns user", async () => {
-    mockGoogleUserInfo({ sub: "google-999", email: "auth@example.com", name: "Auth User" })
-    const app = createApp(createUserRepositoryMock())
+    const verifyGoogleToken = mockGoogleUserInfo({
+      sub: "google-999",
+      email: "auth@example.com",
+      name: "Auth User",
+    })
+    const app = createApp(createUserRepositoryMock(), verifyGoogleToken)
     const res = await request(app)
       .post("/api/auth/verify")
       .send({ accessToken: "dummy-google-token" })
@@ -266,9 +292,74 @@ describe("backend api", () => {
     expect(res.body.user.name).toBe("Auth User")
   })
 
+  test("POST /api/auth/verify rejects userinfo without a valid sub", async () => {
+    const verifyGoogleToken = mockGoogleUserInfo({ email: "no-sub@example.com" })
+    const app = createApp(createUserRepositoryMock(), verifyGoogleToken)
+    const res = await request(app)
+      .post("/api/auth/verify")
+      .send({ accessToken: "dummy-google-token" })
+    expect(res.status).toBe(401)
+  })
+
+  test("POST /api/auth/verify rejects userinfo without a valid email", async () => {
+    const verifyGoogleToken = mockGoogleUserInfo({ sub: "google-no-email" })
+    const app = createApp(createUserRepositoryMock(), verifyGoogleToken)
+    const res = await request(app)
+      .post("/api/auth/verify")
+      .send({ accessToken: "dummy-google-token" })
+    expect(res.status).toBe(401)
+  })
+
+  test("POST /api/auth/verify rejects a token issued for another client", async () => {
+    const verifyGoogleToken = mockGoogleUserInfo(
+      { sub: "google-wrong-aud", email: "wrong-aud@example.com" },
+      { aud: "another-client.apps.googleusercontent.com" }
+    )
+    const app = createApp(createUserRepositoryMock(), verifyGoogleToken)
+    const res = await request(app)
+      .post("/api/auth/verify")
+      .send({ accessToken: "dummy-google-token" })
+    expect(res.status).toBe(401)
+  })
+
+  test("POST /api/auth/verify rejects a token whose subject differs from userinfo", async () => {
+    const verifyGoogleToken = mockGoogleUserInfo(
+      { sub: "google-userinfo-sub", email: "mismatch@example.com" },
+      { aud: TEST_GOOGLE_CLIENT_ID, sub: "google-token-sub" }
+    )
+    const app = createApp(createUserRepositoryMock(), verifyGoogleToken)
+    const res = await request(app)
+      .post("/api/auth/verify")
+      .send({ accessToken: "dummy-google-token" })
+    expect(res.status).toBe(401)
+  })
+
+  test("POST /api/auth/verify uses a timeout when fetching userinfo", async () => {
+    let receivedSignal: AbortSignal | undefined
+    globalThis.fetch = mock((_input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+      receivedSignal = init?.signal ?? undefined
+      return Promise.resolve(
+        new Response(JSON.stringify({ sub: "google-timeout", email: "timeout@example.com" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      )
+    }) as unknown as typeof fetch
+    const app = createApp(createUserRepositoryMock(), async () => ({
+      aud: TEST_GOOGLE_CLIENT_ID,
+      sub: "google-timeout",
+      email: "timeout@example.com",
+    }))
+    const res = await request(app)
+      .post("/api/auth/verify")
+      .send({ accessToken: "dummy-google-token" })
+    expect(res.status).toBe(200)
+    expect(receivedSignal).toBeInstanceOf(AbortSignal)
+  })
+
   test("GET /api/auth/me returns user when session exists", async () => {
-    mockGoogleUserInfo({ sub: "google-998", email: "me@example.com" })
-    const app = createApp(createUserRepositoryMock())
+    const verifyGoogleToken = mockGoogleUserInfo({ sub: "google-998", email: "me@example.com" })
+    const app = createApp(createUserRepositoryMock(), verifyGoogleToken)
     const agent = request.agent(app)
     await agent.post("/api/auth/verify").send({ accessToken: "dummy" })
     const me = await agent.get("/api/auth/me")
@@ -283,8 +374,8 @@ describe("backend api", () => {
   })
 
   test("POST /api/auth/logout destroys session", async () => {
-    mockGoogleUserInfo({ sub: "google-997", email: "logout@example.com" })
-    const app = createApp(createUserRepositoryMock())
+    const verifyGoogleToken = mockGoogleUserInfo({ sub: "google-997", email: "logout@example.com" })
+    const app = createApp(createUserRepositoryMock(), verifyGoogleToken)
     const agent = request.agent(app)
     await agent.post("/api/auth/verify").send({ accessToken: "dummy" })
     const logout = await agent.post("/api/auth/logout")

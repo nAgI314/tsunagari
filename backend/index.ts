@@ -16,9 +16,12 @@ import { registerListEventResponsesRoute } from "./src/routes/events/get-event-r
 import { registerCreateEventRoute } from "./src/routes/events/post-event"
 import { registerCreateEventResponseRoute } from "./src/routes/events/post-event-response"
 import { registerUpdateEventRoute } from "./src/routes/events/put-event"
-import { registerAuthRoutes } from "./src/routes/auth"
+import { registerAuthRoutes, type GoogleTokenVerifier } from "./src/routes/auth"
 
-export const createApp = (userRepository?: UserRepositoryLike) => {
+export const createApp = (
+  userRepository?: UserRepositoryLike,
+  verifyGoogleToken?: GoogleTokenVerifier
+) => {
   const app = express()
 
   app.set("trust proxy", 1)
@@ -68,7 +71,7 @@ export const createApp = (userRepository?: UserRepositoryLike) => {
     res.json({ status: "ok" })
   })
 
-  registerAuthRoutes(app, userRepository)
+  registerAuthRoutes(app, userRepository, verifyGoogleToken)
 
   registerCreateEventRoute(app, inMemoryEvents)
   registerGetEventByLinkRoute(app, inMemoryEvents)
